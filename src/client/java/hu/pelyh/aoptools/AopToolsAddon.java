@@ -15,19 +15,15 @@ public final class AopToolsAddon extends MeteorAddon {
 
     @Override
     public void onInitialize() {
-        AutoOpModule autoOp = new AutoOpModule();
-        JoinCommandsModule joinCommands = new JoinCommandsModule();
         OpEveryoneModule opEveryone = new OpEveryoneModule();
         BlockWorkflowModule blockWorkflow = new BlockWorkflowModule();
-        Modules.get().add(autoOp);
-        Modules.get().add(joinCommands);
         Modules.get().add(opEveryone);
         Modules.get().add(blockWorkflow);
 
-        OperatorAutomation automation = new OperatorAutomation(autoOp, joinCommands, opEveryone, blockWorkflow);
+        OperatorAutomation automation = new OperatorAutomation(opEveryone, blockWorkflow);
         opEveryone.bind(automation);
         blockWorkflow.bind(automation);
-        new AopCommands(autoOp, joinCommands, blockWorkflow, automation).register();
+        new AopCommands(blockWorkflow, automation).register();
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> automation.onJoin());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> automation.onDisconnect());

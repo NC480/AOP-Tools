@@ -1,11 +1,9 @@
 package hu.pelyh.aoptools;
 
-import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.settings.StringListSetting;
-import meteordevelopment.meteorclient.settings.StringSetting;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.gui.widgets.containers.WTable;
@@ -26,46 +24,10 @@ public final class BlockWorkflowModule extends Module {
             .visible(() -> false)
             .build());
 
-    public final Setting<String> server = storage.add(new StringSetting.Builder()
-            .name("szerver")
-            .description("A pontos szervercím a belépéskori futtatáshoz.")
-            .defaultValue("")
-            .visible(() -> false)
-            .build());
-
-    public final Setting<String> account = storage.add(new StringSetting.Builder()
-            .name("belepesi-fiok")
-            .description("A saját fióknév a belépéskori futtatáshoz.")
-            .defaultValue("")
-            .visible(() -> false)
-            .build());
-
-    public final Setting<Boolean> runOnJoin = storage.add(new BoolSetting.Builder()
-            .name("futtatas-belepeskor")
-            .description("A mentett blokkok automatikus futtatása belépéskor.")
-            .defaultValue(false)
-            .visible(() -> false)
-            .build());
-
-    public final Setting<Boolean> allowDangerousOnJoin = storage.add(new BoolSetting.Builder()
-            .name("kick-ban-belepeskor")
-            .description("Engedélyezi a kill/kick/ban blokkokat automatikus futtatásnál.")
-            .defaultValue(false)
-            .visible(() -> false)
-            .build());
-
-    public final Setting<Boolean> excludeSelf = storage.add(new BoolSetting.Builder()
+    public final Setting<Boolean> excludeSelf = storage.add(new meteordevelopment.meteorclient.settings.BoolSetting.Builder()
             .name("sajat-fiok-kihagyasa")
             .description("Az összes játékost érintő blokkok kihagyják a belépett fiókot.")
             .defaultValue(true)
-            .visible(() -> false)
-            .build());
-
-    public final Setting<Integer> joinDelayTicks = storage.add(new IntSetting.Builder()
-            .name("belepesi-varakozas")
-            .description("Belépés után ennyi tickkel induljon a blokkprogram.")
-            .defaultValue(60)
-            .range(20, 1200)
             .visible(() -> false)
             .build());
 
@@ -114,7 +76,7 @@ public final class BlockWorkflowModule extends Module {
             openEditor();
         } else if (automation != null) {
             // Játék közben a billentyű-/egérbind a mentett programot futtatja.
-            OperatorAutomation.Result result = automation.runWorkflowFromBind(mc, allowDangerousOnJoin.get());
+            OperatorAutomation.Result result = automation.runWorkflowFromBind(mc, true);
             if (result.success()) info(result.message());
             else error(result.message());
         }
@@ -123,13 +85,6 @@ public final class BlockWorkflowModule extends Module {
 
     public void openEditor() {
         if (automation == null) return;
-
-        if (server.get().isBlank() && mc.getCurrentServer() != null) {
-            server.set(mc.getCurrentServer().ip);
-        }
-        if (account.get().isBlank() && mc.getUser() != null) {
-            account.set(mc.getUser().getName());
-        }
 
         Screen parent = mc.screen;
         mc.execute(() -> mc.setScreen(new BlockWorkflowScreen(this, automation, parent)));
@@ -140,9 +95,9 @@ public final class BlockWorkflowModule extends Module {
         WTable table = theme.table();
         table.add(theme.label("Bind: mentett program futtatása.", false)).expandX();
         table.row();
-        table.add(theme.label("OP ALL • deOP ALL • KILL ALL • KICK ALL • BAN ALL", false)).expandX();
+        table.add(theme.label("OP/deOP/KILL/KICK/BAN • ALL és XY", false)).expandX();
         table.row();
-        table.add(theme.label("OP XY • deOP XY • KILL XY • KICK XY • BAN XY", false)).expandX();
+        table.add(theme.label("Folyamatos blokk ALL/XY lába alá • bind: indítás/leállítás", false)).expandX();
         table.row();
 
         WButton open = table.add(theme.button("BLOKKEDITOR MEGNYITÁSA")).expandX().widget();

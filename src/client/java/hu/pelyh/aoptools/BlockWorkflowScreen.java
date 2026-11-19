@@ -10,22 +10,22 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
 public final class BlockWorkflowScreen extends Screen {
-    private static final int BLOCK_HEIGHT = 25;
-    private static final int BLOCK_GAP = 5;
+    private static final int BLOCK_HEIGHT = 17;
+    private static final int BLOCK_GAP = 3;
+    private static final int BODY_TOP = 47;
 
     private final BlockWorkflowModule module;
     private final OperatorAutomation automation;
     private final Screen parent;
     private final List<WorkflowBlock> blocks;
-    private EditBox serverBox;
-    private EditBox accountBox;
+    private EditBox searchBox;
     private EditBox targetBox;
-    private Button joinButton;
-    private Button dangerousButton;
+    private EditBox blockBox;
     private Button selfButton;
     private DelaySlider delaySlider;
     private Button runButton;
@@ -34,7 +34,7 @@ public final class BlockWorkflowScreen extends Screen {
     private int paletteScroll;
     private int sequenceScroll;
     private boolean runArmed;
-    private String notice = "Húzz blokkokat balról a programba. Jobb kattintás: törlés.";
+    private String notice = "Keresés, majd húzd a blokkot a programba. Jobb kattintás: törlés.";
     private int noticeColor = 0xFFBDBDBD;
 
     public BlockWorkflowScreen(BlockWorkflowModule module, OperatorAutomation automation, Screen parent) {
@@ -47,236 +47,171 @@ public final class BlockWorkflowScreen extends Screen {
 
     @Override
     protected void init() {
-        int fieldWidth = Math.max(110, Math.min(190, (width - 56) / 3));
-        serverBox = addRenderableWidget(new EditBox(font, 12, 30, fieldWidth, 20, Component.literal("Szerver")));
-        serverBox.setMaxLength(255);
-        serverBox.setValue(module.server.get());
-        serverBox.setHint(Component.literal("pelda.aternos.me"));
-        serverBox.setResponder(value -> module.server.set(value.trim()));
-
-        accountBox = addRenderableWidget(new EditBox(font, 20 + fieldWidth, 30, fieldWidth, 20, Component.literal("Belépési fiók")));
-        accountBox.setMaxLength(16);
-        accountBox.setValue(module.account.get());
-        accountBox.setHint(Component.literal("saját fióknév"));
-        accountBox.setResponder(value -> module.account.set(value.trim()));
-
-        int toggleX = 28 + fieldWidth * 2;
-        int toggleWidth = Math.max(92, Math.min(145, width - toggleX - 12));
-        joinButton = addRenderableWidget(Button.builder(Component.empty(), button -> {
-            module.runOnJoin.set(!module.runOnJoin.get());
-            refreshButtons();
-        }).bounds(toggleX, 30, toggleWidth, 20).build());
-
-        int optionWidth = Math.min(160, Math.max(90, (width - 32) / 3));
-        dangerousButton = addRenderableWidget(Button.builder(Component.empty(), button -> {
-            module.allowDangerousOnJoin.set(!module.allowDangerousOnJoin.get());
-            refreshButtons();
-        }).bounds(12, 55, optionWidth, 20).build());
-
+        int optionWidth = Math.max(120, Math.min(190, (width - 36) / 2));
         selfButton = addRenderableWidget(Button.builder(Component.empty(), button -> {
             module.excludeSelf.set(!module.excludeSelf.get());
             refreshButtons();
-        }).bounds(16 + optionWidth, 55, optionWidth, 20).build());
+        }).bounds(12, 22, optionWidth, 20).build());
+        delaySlider = addRenderableWidget(new DelaySlider(width - 12 - optionWidth, 22, optionWidth, 20));
 
-        delaySlider = addRenderableWidget(new DelaySlider(20 + optionWidth * 2, 55, optionWidth, 20));
+        int paletteX = 12;
+        int paletteWidth = paletteWidth();
+        int fieldWidth = paletteWidth - 16;
+        searchBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 18, fieldWidth, 18, Component.literal("Keresés")));
+        searchBox.setMaxLength(40);
+        searchBox.setHint(Component.literal("Keresés: op, kill, blokk..."));
+        searchBox.setResponder(value -> paletteScroll = 0);
 
-        int bottomY = height - 29;
-        int bottomWidth = Math.min(145, Math.max(90, (width - 32) / 3));
-        runButton = addRenderableWidget(Button.builder(Component.literal("Futtatás most"), button -> runNow())
-                .bounds(12, bottomY, bottomWidth, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Program törlése"), button -> {
-            blocks.clear();
-            save();
-            runArmed = false;
-            notice("A blokkprogram törölve.", ChatFormatting.YELLOW);
-            refreshButtons();
-        }).bounds(16 + bottomWidth, bottomY, bottomWidth, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("Mentés és vissza"), button -> onClose())
-                .bounds(width - 12 - bottomWidth, bottomY, bottomWidth, 20).build());
-
-        int paletteWidth = Math.max(176, Math.min(230, width / 3));
-        int targetY = 115;
-        targetBox = addRenderableWidget(new EditBox(font, 20, targetY, paletteWidth - 16, 20,
-                Component.literal("XY játékosnév")));
+        targetBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 39, fieldWidth, 18, Component.literal("XY játékos")));
         targetBox.setMaxLength(16);
         targetBox.setFilter(value -> value.isEmpty() || OperatorAutomation.isValidPlayerName(value));
-        targetBox.setHint(Component.literal("Steve"));
+        targetBox.setHint(Component.literal("XY játékosnév, pl. Steve"));
 
+        blockBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 60, fieldWidth, 18, Component.literal("Blokk")));
+        blockBox.setMaxLength(80);
+        blockBox.setHint(Component.literal("Blokk, pl. tnt vagy minecraft:tnt"));
+
+        int bottomY = height - 24;
+        int buttonWidth = Math.max(92, Math.min(145, (width - 32) / 3));
+        runButton = addRenderableWidget(Button.builder(Component.empty(), button -> runNow())
+                .bounds(12, bottomY, buttonWidth, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Program törlése"), button -> {
+            blocks.clear(); save(); runArmed = false;
+            notice("A blokkprogram törölve.", ChatFormatting.YELLOW); refreshButtons();
+        }).bounds(16 + buttonWidth, bottomY, buttonWidth, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Mentés és vissza"), button -> onClose())
+                .bounds(width - 12 - buttonWidth, bottomY, buttonWidth, 20).build());
         refreshButtons();
     }
 
+    private int paletteWidth() { return Math.max(205, Math.min(300, (int) (width * 0.45))); }
+    private int bodyBottom() { return height - 46; }
+    private int paletteViewportTop() { return BODY_TOP + 82; }
+    private int workspaceX() { return 22 + paletteWidth(); }
+
     private void refreshButtons() {
-        joinButton.setMessage(Component.literal("Belépéskor: " + onOff(module.runOnJoin.get())));
-        dangerousButton.setMessage(Component.literal("Auto kill/kick/ban: " + onOff(module.allowDangerousOnJoin.get())));
         selfButton.setMessage(Component.literal("Saját fiók: " + (module.excludeSelf.get() ? "KIHAGY" : "BENNE")));
         delaySlider.refreshFromSetting();
-        runButton.setMessage(Component.literal(runArmed ? "BIZTOSAN FUTTATOD?" : "Futtatás most"));
-    }
-
-    private static String onOff(boolean value) {
-        return value ? "BE" : "KI";
+        runButton.setMessage(Component.literal(runArmed ? "BIZTOSAN FUTTATOD?" : "Futtatás / leállítás"));
     }
 
     private void runNow() {
         save();
         if (module.containsDangerousBlock() && !runArmed) {
             runArmed = true;
-            notice("A program kill/kick/ban blokkot tartalmaz. Kattints még egyszer a futtatáshoz!", ChatFormatting.RED);
+            notice("KILL/KICK/BAN van a programban. Kattints még egyszer!", ChatFormatting.RED);
             refreshButtons();
             return;
         }
-
         OperatorAutomation.Result result = automation.runWorkflow(minecraft, true);
         runArmed = false;
         notice(result.message(), result.success() ? ChatFormatting.GREEN : ChatFormatting.RED);
         refreshButtons();
     }
 
-    private void save() {
-        module.saveBlocks(blocks);
+    private List<WorkflowBlock.Type> filteredTypes() {
+        String query = searchBox == null ? "" : searchBox.getValue().trim().toLowerCase(Locale.ROOT);
+        return Arrays.stream(WorkflowBlock.Type.values())
+                .filter(type -> query.isEmpty() || type.label.toLowerCase(Locale.ROOT).contains(query)
+                        || type.name().toLowerCase(Locale.ROOT).contains(query))
+                .toList();
     }
 
+    private void save() { module.saveBlocks(blocks); }
     private void notice(String message, ChatFormatting color) {
         notice = message;
         noticeColor = color.getColor() == null ? 0xFFFFFFFF : 0xFF000000 | color.getColor();
     }
 
-    @Override
-    public void onClose() {
-        save();
-        minecraft.setScreen(parent);
-    }
-
-    @Override
-    public boolean isPauseScreen() {
-        return false;
-    }
+    @Override public void onClose() { save(); minecraft.setScreen(parent); }
+    @Override public boolean isPauseScreen() { return false; }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // Meteor already renders a blurred ClickGUI background. Minecraft 1.21.11
-        // throws if a second screen requests blur in the same frame, so this editor
-        // deliberately uses its own opaque background.
         graphics.fill(0, 0, width, height, 0xFF0B0E14);
-        graphics.drawCenteredString(font, title, width / 2, 10, 0xFFFFFFFF);
-        graphics.drawString(font, "Szerver (auto futtatáshoz)", 12, 20, 0xFFBDBDBD);
-        graphics.drawString(font, "Belépési fiók", accountBox.getX(), 20, 0xFFBDBDBD);
+        graphics.drawCenteredString(font, title, width / 2, 8, 0xFFFFFFFF);
+        int paletteX = 12, paletteWidth = paletteWidth(), bodyBottom = bodyBottom();
+        int workspaceX = workspaceX(), workspaceWidth = width - workspaceX - 12;
+        graphics.fill(paletteX, BODY_TOP, paletteX + paletteWidth, bodyBottom, 0xCC171A20);
+        graphics.renderOutline(paletteX, BODY_TOP, paletteWidth, bodyBottom - BODY_TOP, 0xFF4B5563);
+        graphics.fill(workspaceX, BODY_TOP, workspaceX + workspaceWidth, bodyBottom, 0xCC111827);
+        graphics.renderOutline(workspaceX, BODY_TOP, workspaceWidth, bodyBottom - BODY_TOP, 0xFF4B5563);
 
-        int bodyTop = 86;
-        int bodyBottom = height - 49;
-        int paletteX = 12;
-        int paletteWidth = Math.max(176, Math.min(230, width / 3));
-        int workspaceX = paletteX + paletteWidth + 10;
-        int workspaceWidth = width - workspaceX - 12;
-
-        graphics.fill(paletteX, bodyTop, paletteX + paletteWidth, bodyBottom, 0xCC171A20);
-        graphics.renderOutline(paletteX, bodyTop, paletteWidth, bodyBottom - bodyTop, 0xFF4B5563);
-        graphics.fill(workspaceX, bodyTop, workspaceX + workspaceWidth, bodyBottom, 0xCC111827);
-        graphics.renderOutline(workspaceX, bodyTop, workspaceWidth, bodyBottom - bodyTop, 0xFF4B5563);
-        int paletteViewportTop = bodyTop + 57;
-        int paletteRows = paletteVisibleRows(bodyBottom, paletteViewportTop);
-        clampPaletteScroll(paletteRows);
-        int paletteShown = Math.min(WorkflowBlock.Type.values().length - paletteScroll, paletteRows);
-        graphics.drawString(font, "BLOKKOK • görgess  " + (paletteScroll + 1) + "–"
-                + (paletteScroll + paletteShown) + "/" + WorkflowBlock.Type.values().length,
-                paletteX + 8, bodyTop + 7, 0xFFFFFFFF);
-        graphics.drawString(font, "PROGRAM – fentről lefelé fut", workspaceX + 8, bodyTop + 7, 0xFFFFFFFF);
-
-        graphics.drawString(font, "XY név (behúzás előtt):", paletteX + 8, bodyTop + 20, 0xFFBDBDBD);
-        graphics.enableScissor(paletteX + 1, paletteViewportTop, paletteX + paletteWidth - 1, bodyBottom - 2);
-        for (int row = 0; row < paletteShown; row++) {
-            WorkflowBlock.Type type = WorkflowBlock.Type.values()[paletteScroll + row];
-            int paletteY = paletteViewportTop + 3 + row * (BLOCK_HEIGHT + BLOCK_GAP);
-            drawBlock(graphics, paletteX + 8, paletteY, paletteWidth - 16, WorkflowBlock.of(type, "XY"), false);
+        List<WorkflowBlock.Type> types = filteredTypes();
+        int viewportTop = paletteViewportTop();
+        int rows = visibleRows(bodyBottom, viewportTop);
+        clampPaletteScroll(rows, types.size());
+        int shownTypes = Math.min(Math.max(0, types.size() - paletteScroll), rows);
+        graphics.drawString(font, "BLOKKOK • " + types.size() + " találat", paletteX + 8, BODY_TOP + 6, 0xFFFFFFFF);
+        graphics.drawString(font, "PROGRAM – fentről lefelé", workspaceX + 8, BODY_TOP + 7, 0xFFFFFFFF);
+        graphics.enableScissor(paletteX + 1, viewportTop, paletteX + paletteWidth - 1, bodyBottom - 1);
+        for (int row = 0; row < shownTypes; row++) {
+            WorkflowBlock.Type type = types.get(paletteScroll + row);
+            int y = viewportTop + 2 + row * (BLOCK_HEIGHT + BLOCK_GAP);
+            drawBlock(graphics, paletteX + 8, y, paletteWidth - 16, preview(type), false);
         }
         graphics.disableScissor();
 
-        int sequenceY = bodyTop + 25;
-        int available = Math.max(1, (bodyBottom - sequenceY - 6) / (BLOCK_HEIGHT + BLOCK_GAP));
-        clampScroll(available);
-        int shown = Math.min(blocks.size() - sequenceScroll, available);
+        int sequenceY = BODY_TOP + 24;
+        int available = Math.max(1, (bodyBottom - sequenceY - 5) / (BLOCK_HEIGHT + BLOCK_GAP));
+        clampSequenceScroll(available);
+        int shown = Math.min(Math.max(0, blocks.size() - sequenceScroll), available);
         for (int row = 0; row < shown; row++) {
-            int index = sequenceScroll + row;
-            drawBlock(graphics, workspaceX + 10, sequenceY + row * (BLOCK_HEIGHT + BLOCK_GAP),
-                    workspaceWidth - 20, blocks.get(index), true);
+            drawBlock(graphics, workspaceX + 8, sequenceY + row * (BLOCK_HEIGHT + BLOCK_GAP),
+                    workspaceWidth - 16, blocks.get(sequenceScroll + row), true);
         }
-        if (blocks.size() > available) {
-            graphics.drawString(font, "Görgess a programon • " + (sequenceScroll + 1) + "–"
-                            + (sequenceScroll + shown) + " / " + blocks.size(),
-                    workspaceX + 12, bodyBottom - 13, 0xFFFFC107);
-        }
-        if (blocks.isEmpty()) {
-            graphics.drawCenteredString(font, "Húzz ide egy blokkot", workspaceX + workspaceWidth / 2,
-                    bodyTop + 54, 0xFF7C8799);
-        }
-
-        graphics.drawString(font, notice, 12, height - 43, noticeColor);
+        if (blocks.isEmpty()) graphics.drawCenteredString(font, "Húzz ide blokkokat", workspaceX + workspaceWidth / 2,
+                BODY_TOP + 55, 0xFF7C8799);
+        graphics.drawString(font, notice, 12, height - 41, noticeColor);
         super.render(graphics, mouseX, mouseY, partialTick);
+        if (dragging != null) drawBlock(graphics, mouseX - 85, mouseY - BLOCK_HEIGHT / 2, 170, dragging, true);
+    }
 
-        if (dragging != null) {
-            drawBlock(graphics, mouseX - 70, mouseY - BLOCK_HEIGHT / 2, 140, dragging, true);
-        }
+    private WorkflowBlock preview(WorkflowBlock.Type type) {
+        String target = type.needsTarget ? (targetBox.getValue().isBlank() ? "XY" : targetBox.getValue()) : "";
+        String value = type.needsValue ? (blockBox.getValue().isBlank() ? "minecraft:tnt" : blockBox.getValue()) : "";
+        return WorkflowBlock.of(type, target, value);
     }
 
     private void drawBlock(GuiGraphics graphics, int x, int y, int blockWidth, WorkflowBlock block, boolean sequence) {
         int color = block.type().color;
         graphics.fill(x, y, x + blockWidth, y + BLOCK_HEIGHT, color);
-        graphics.fill(x + 4, y - 3, x + 25, y + 2, color);
         graphics.renderOutline(x, y, blockWidth, BLOCK_HEIGHT, 0xDDFFFFFF);
-        String prefix = sequence ? "⋮⋮  " : "+  ";
-        graphics.drawString(font, prefix + block.label(), x + 8, y + 8, 0xFFFFFFFF, true);
+        graphics.drawString(font, (sequence ? "⋮⋮ " : "+ ") + block.label(), x + 6, y + 5, 0xFFFFFFFF, true);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (super.mouseClicked(event, doubleClick)) return true;
-
-        double mouseX = event.x();
-        double mouseY = event.y();
-        int bodyTop = 86;
-        int paletteX = 12;
-        int paletteWidth = Math.max(176, Math.min(230, width / 3));
-        int workspaceX = paletteX + paletteWidth + 10;
-        int bodyBottom = height - 49;
-        int paletteViewportTop = bodyTop + 57;
-
-        if (event.button() == 0 && mouseX >= paletteX + 8 && mouseX < paletteX + paletteWidth - 8
-                && mouseY >= paletteViewportTop && mouseY < bodyBottom) {
-            int relativeY = (int) mouseY - (paletteViewportTop + 3);
-            int index = relativeY < 0 ? -1 : relativeY / (BLOCK_HEIGHT + BLOCK_GAP);
-            int within = relativeY < 0 ? -1 : relativeY % (BLOCK_HEIGHT + BLOCK_GAP);
-            int typeIndex = paletteScroll + index;
-            if (index >= 0 && typeIndex < WorkflowBlock.Type.values().length && within < BLOCK_HEIGHT) {
-                WorkflowBlock.Type type = WorkflowBlock.Type.values()[typeIndex];
+        double mx = event.x(), my = event.y();
+        int paletteWidth = paletteWidth(), bodyBottom = bodyBottom(), viewportTop = paletteViewportTop();
+        List<WorkflowBlock.Type> types = filteredTypes();
+        if (event.button() == 0 && mx >= 20 && mx < 12 + paletteWidth - 8 && my >= viewportTop && my < bodyBottom) {
+            int relative = (int) my - (viewportTop + 2);
+            int row = relative < 0 ? -1 : relative / (BLOCK_HEIGHT + BLOCK_GAP);
+            int within = relative < 0 ? -1 : relative % (BLOCK_HEIGHT + BLOCK_GAP);
+            int typeIndex = paletteScroll + row;
+            if (row >= 0 && typeIndex < types.size() && within < BLOCK_HEIGHT) {
+                WorkflowBlock.Type type = types.get(typeIndex);
                 String target = targetBox.getValue().trim();
+                String value = blockBox.getValue().trim();
                 if (type.needsTarget && !OperatorAutomation.isValidPlayerName(target)) {
-                    targetBox.setFocused(true);
-                    notice("Előbb írd be az XY nevet fent, utána húzd be az OP XY/deOP XY blokkot.",
-                            ChatFormatting.RED);
-                    return true;
+                    targetBox.setFocused(true); notice("Előbb adj meg érvényes XY játékosnevet.", ChatFormatting.RED); return true;
                 }
-                dragging = WorkflowBlock.of(type, target);
-                dragOriginalIndex = -1;
-                setDragging(true);
-                return true;
+                if (type.needsValue && !WorkflowBlock.isValidBlockId(value)) {
+                    blockBox.setFocused(true); notice("Adj meg blokkazonosítót, például: tnt vagy minecraft:stone", ChatFormatting.RED); return true;
+                }
+                dragging = WorkflowBlock.of(type, target, value); dragOriginalIndex = -1; setDragging(true); return true;
             }
         }
-
-        int index = sequenceIndexAt(mouseX, mouseY, workspaceX, bodyTop);
+        int index = sequenceIndexAt(mx, my);
         if (index >= 0 && index < blocks.size()) {
             if (event.button() == 1) {
-                blocks.remove(index);
-                save();
-                runArmed = false;
-                refreshButtons();
-                notice("Blokk törölve.", ChatFormatting.YELLOW);
-                return true;
+                blocks.remove(index); save(); runArmed = false; refreshButtons();
+                notice("Blokk törölve.", ChatFormatting.YELLOW); return true;
             }
             if (event.button() == 0) {
-                dragging = blocks.remove(index);
-                dragOriginalIndex = index;
-                setDragging(true);
-                return true;
+                dragging = blocks.remove(index); dragOriginalIndex = index; setDragging(true); return true;
             }
         }
         return false;
@@ -285,108 +220,56 @@ public final class BlockWorkflowScreen extends Screen {
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
         if (dragging != null && event.button() == 0) {
-            int bodyTop = 86;
-            int paletteWidth = Math.max(176, Math.min(230, width / 3));
-            int workspaceX = 22 + paletteWidth;
-            int bodyBottom = height - 49;
-            if (event.x() >= workspaceX && event.x() <= width - 12 && event.y() >= bodyTop && event.y() <= bodyBottom) {
-                int index = insertionIndex(event.y(), bodyTop);
-                blocks.add(Math.min(index, blocks.size()), dragging);
-                notice("Blokk hozzáadva. A program automatikusan mentve.", ChatFormatting.GREEN);
-            } else if (dragOriginalIndex >= 0) {
-                blocks.add(Math.min(dragOriginalIndex, blocks.size()), dragging);
-                notice("A blokk visszakerült az eredeti helyére.", ChatFormatting.GRAY);
-            }
-            dragging = null;
-            dragOriginalIndex = -1;
-            setDragging(false);
-            runArmed = false;
-            save();
-            refreshButtons();
-            return true;
+            if (event.x() >= workspaceX() && event.x() <= width - 12 && event.y() >= BODY_TOP && event.y() <= bodyBottom()) {
+                blocks.add(Math.min(insertionIndex(event.y()), blocks.size()), dragging);
+                notice("Blokk hozzáadva és mentve.", ChatFormatting.GREEN);
+            } else if (dragOriginalIndex >= 0) blocks.add(Math.min(dragOriginalIndex, blocks.size()), dragging);
+            dragging = null; dragOriginalIndex = -1; setDragging(false); runArmed = false; save(); refreshButtons(); return true;
         }
         return super.mouseReleased(event);
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        int paletteWidth = Math.max(176, Math.min(230, width / 3));
-        int workspaceX = 22 + paletteWidth;
-        int bodyTop = 86;
-        int bodyBottom = height - 49;
-        if (mouseX >= 12 && mouseX < 12 + paletteWidth && mouseY >= bodyTop && mouseY <= bodyBottom) {
-            int paletteViewportTop = bodyTop + 57;
-            int visibleRows = paletteVisibleRows(bodyBottom, paletteViewportTop);
+        if (mouseX >= 12 && mouseX < 12 + paletteWidth() && mouseY >= BODY_TOP && mouseY <= bodyBottom()) {
             paletteScroll -= (int) Math.signum(verticalAmount);
-            clampPaletteScroll(visibleRows);
-            return true;
+            clampPaletteScroll(visibleRows(bodyBottom(), paletteViewportTop()), filteredTypes().size()); return true;
         }
-        if (mouseX >= workspaceX && mouseX <= width - 12 && mouseY >= bodyTop && mouseY <= bodyBottom) {
-            int available = Math.max(1, (bodyBottom - (bodyTop + 25) - 6) / (BLOCK_HEIGHT + BLOCK_GAP));
-            sequenceScroll -= (int) Math.signum(verticalAmount);
-            clampScroll(available);
-            return true;
+        if (mouseX >= workspaceX() && mouseX <= width - 12 && mouseY >= BODY_TOP && mouseY <= bodyBottom()) {
+            int available = Math.max(1, (bodyBottom() - (BODY_TOP + 24) - 5) / (BLOCK_HEIGHT + BLOCK_GAP));
+            sequenceScroll -= (int) Math.signum(verticalAmount); clampSequenceScroll(available); return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    private int sequenceIndexAt(double mouseX, double mouseY, int workspaceX, int bodyTop) {
-        if (mouseX < workspaceX + 10 || mouseX > width - 22) return -1;
-        int y = (int) mouseY - (bodyTop + 25);
+    private int sequenceIndexAt(double mx, double my) {
+        if (mx < workspaceX() + 8 || mx > width - 20) return -1;
+        int y = (int) my - (BODY_TOP + 24);
         if (y < 0) return -1;
-        int index = y / (BLOCK_HEIGHT + BLOCK_GAP);
-        int within = y % (BLOCK_HEIGHT + BLOCK_GAP);
-        return within < BLOCK_HEIGHT ? sequenceScroll + index : -1;
+        return y % (BLOCK_HEIGHT + BLOCK_GAP) < BLOCK_HEIGHT ? sequenceScroll + y / (BLOCK_HEIGHT + BLOCK_GAP) : -1;
     }
-
-    private int insertionIndex(double mouseY, int bodyTop) {
-        int y = Math.max(0, (int) mouseY - (bodyTop + 25));
-        int index = sequenceScroll + (y + (BLOCK_HEIGHT + BLOCK_GAP) / 2) / (BLOCK_HEIGHT + BLOCK_GAP);
-        return Math.max(0, Math.min(blocks.size(), index));
+    private int insertionIndex(double my) {
+        int y = Math.max(0, (int) my - (BODY_TOP + 24));
+        return Math.max(0, Math.min(blocks.size(), sequenceScroll + (y + 10) / (BLOCK_HEIGHT + BLOCK_GAP)));
     }
-
-    private void clampScroll(int visibleRows) {
-        sequenceScroll = Math.max(0, Math.min(sequenceScroll, Math.max(0, blocks.size() - visibleRows)));
-    }
-
-    private static int paletteVisibleRows(int bodyBottom, int paletteViewportTop) {
-        return Math.max(1, (bodyBottom - paletteViewportTop - 4) / (BLOCK_HEIGHT + BLOCK_GAP));
-    }
-
-    private void clampPaletteScroll(int visibleRows) {
-        paletteScroll = Math.max(0, Math.min(paletteScroll,
-                Math.max(0, WorkflowBlock.Type.values().length - visibleRows)));
-    }
+    private static int visibleRows(int bottom, int top) { return Math.max(1, (bottom - top - 3) / (BLOCK_HEIGHT + BLOCK_GAP)); }
+    private void clampSequenceScroll(int rows) { sequenceScroll = Math.max(0, Math.min(sequenceScroll, Math.max(0, blocks.size() - rows))); }
+    private void clampPaletteScroll(int rows, int count) { paletteScroll = Math.max(0, Math.min(paletteScroll, Math.max(0, count - rows))); }
 
     private final class DelaySlider extends AbstractSliderButton {
-        private static final int MIN_TICKS = 1;
-        private static final int MAX_TICKS = 200;
-
+        private static final int MIN_TICKS = 1, MAX_TICKS = 200;
         private DelaySlider(int x, int y, int width, int height) {
-            super(x, y, width, height, Component.empty(), toSliderValue(module.commandDelayTicks.get()));
-            updateMessage();
+            super(x, y, width, height, Component.empty(), toValue(module.commandDelayTicks.get())); updateMessage();
         }
-
-        @Override
-        protected void updateMessage() {
+        @Override protected void updateMessage() {
             double seconds = module.commandDelayTicks.get() / 20.0;
-            setMessage(Component.literal("Parancsköz: "
-                    + String.format(Locale.ROOT, seconds < 1 ? "%.2f" : "%.1f", seconds) + " mp"));
+            setMessage(Component.literal("Ismétlés: " + String.format(Locale.ROOT, seconds < 1 ? "%.2f" : "%.1f", seconds) + " mp"));
         }
-
-        @Override
-        protected void applyValue() {
-            int ticks = MIN_TICKS + (int) Math.round(value * (MAX_TICKS - MIN_TICKS));
-            module.commandDelayTicks.set(ticks);
-            updateMessage();
+        @Override protected void applyValue() {
+            module.commandDelayTicks.set(MIN_TICKS + (int) Math.round(value * (MAX_TICKS - MIN_TICKS))); updateMessage();
         }
-
-        private void refreshFromSetting() {
-            value = toSliderValue(module.commandDelayTicks.get());
-            updateMessage();
-        }
-
-        private static double toSliderValue(int ticks) {
+        private void refreshFromSetting() { value = toValue(module.commandDelayTicks.get()); updateMessage(); }
+        private static double toValue(int ticks) {
             int clamped = Math.max(MIN_TICKS, Math.min(MAX_TICKS, ticks));
             return (clamped - MIN_TICKS) / (double) (MAX_TICKS - MIN_TICKS);
         }

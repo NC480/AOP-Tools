@@ -1,24 +1,17 @@
 package hu.pelyh.aoptools;
 
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument;
 import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal;
 
 public final class AopCommands {
-    private final AutoOpModule autoOp;
-    private final JoinCommandsModule joinCommands;
     private final BlockWorkflowModule blockWorkflow;
     private final OperatorAutomation automation;
 
-    public AopCommands(AutoOpModule autoOp, JoinCommandsModule joinCommands,
-                       BlockWorkflowModule blockWorkflow, OperatorAutomation automation) {
-        this.autoOp = autoOp;
-        this.joinCommands = joinCommands;
+    public AopCommands(BlockWorkflowModule blockWorkflow, OperatorAutomation automation) {
         this.blockWorkflow = blockWorkflow;
         this.automation = automation;
     }
@@ -31,14 +24,6 @@ public final class AopCommands {
                         .then(literal("status").executes(context -> status(context.getSource())))
                         .then(literal("editor").executes(context -> openEditor(context.getSource())))
                         .then(literal("cancel").executes(context -> cancel(context.getSource())))
-                        .then(literal("auto")
-                                .then(argument("érték", BoolArgumentType.bool())
-                                        .executes(context -> setModule(context.getSource(), autoOp,
-                                                BoolArgumentType.getBool(context, "érték"), "Automata OP"))))
-                        .then(literal("join-commands")
-                                .then(argument("érték", BoolArgumentType.bool())
-                                        .executes(context -> setModule(context.getSource(), joinCommands,
-                                                BoolArgumentType.getBool(context, "érték"), "Belépési Parancsok"))))
         ));
     }
 
@@ -52,20 +37,13 @@ public final class AopCommands {
         reply(source, "/aop – minden látható online játékos OP-olása", ChatFormatting.AQUA);
         reply(source, "/aop status – a menüpontok állapota", ChatFormatting.GRAY);
         reply(source, "/aop editor – a húzható Parancs Blokkok editor megnyitása", ChatFormatting.GRAY);
-        reply(source, "/aop auto <true|false> – Automata OP be/ki", ChatFormatting.GRAY);
-        reply(source, "/aop join-commands <true|false> – Belépési Parancsok be/ki", ChatFormatting.GRAY);
-        reply(source, "/aop cancel – várakozó parancsok törlése", ChatFormatting.GRAY);
+        reply(source, "/aop cancel – várakozó és folyamatos futtatás leállítása", ChatFormatting.GRAY);
         return 1;
     }
 
     private int status(FabricClientCommandSource source) {
         reply(source, "Meteor GUI: AOP Manager kategória", ChatFormatting.AQUA);
-        reply(source, "Automata OP: " + onOff(autoOp.isActive())
-                + " | célfiókok: " + autoOp.targetOperators.get().size(), ChatFormatting.GRAY);
-        reply(source, "Belépési Parancsok: " + onOff(joinCommands.isActive())
-                + " | parancsok: " + joinCommands.commands.get().size(), ChatFormatting.GRAY);
-        reply(source, "Parancs Blokkok: " + blockWorkflow.blocks().size()
-                + " blokk | belépéskor: " + onOff(blockWorkflow.runOnJoin.get()), ChatFormatting.GRAY);
+        reply(source, "Parancs Blokkok: " + blockWorkflow.blocks().size() + " blokk", ChatFormatting.GRAY);
         reply(source, "Futó parancssor: " + onOff(automation.isBusy()), ChatFormatting.GRAY);
         return 1;
     }
@@ -80,16 +58,6 @@ public final class AopCommands {
     private int openEditor(FabricClientCommandSource source) {
         blockWorkflow.openEditor();
         reply(source, "A Parancs Blokkok editor megnyitva.", ChatFormatting.GREEN);
-        return 1;
-    }
-
-    private int setModule(FabricClientCommandSource source,
-                          meteordevelopment.meteorclient.systems.modules.Module module,
-                          boolean enabled,
-                          String label) {
-        if (enabled) module.enable();
-        else module.disable();
-        reply(source, label + ": " + onOff(enabled), ChatFormatting.GREEN);
         return 1;
     }
 
