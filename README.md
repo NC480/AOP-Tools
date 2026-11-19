@@ -1,8 +1,10 @@
 # AOP Tools – Meteor addon, Fabric 1.21.11
 
-Meteor Client addon saját szerveren használható admin- és trolleszközökhöz, Scratch-szerű blokkeditorral.
+## Mi ez?
 
-**AOP Tools is a Minecraft 1.21.11 Fabric mod and Meteor Client addon with a searchable Scratch-style command-block editor for authorized server administration.** It supports OP, deOP, kill, kick, ban and continuous block-under-player workflows with ALL and named-player (XY) variants.
+Az AOP Tools egy Minecraft 1.21.11-es Fabric mod és Meteor Client addon saját szerverek adminisztrálásához és játékos tréfák készítéséhez. A kereshető, Scratch-szerű editorban színes blokkokból állíthatsz össze OP, deOP, kill, kick, ban és láb-alá blokkot helyező műveleteket. A programokat elnevezett presetekbe mentheted, majd bindről vagy opcionálisan belépéskor futtathatod.
+
+**English:** AOP Tools is a Minecraft 1.21.11 Fabric mod and Meteor Client addon for authorized server administration and player pranks. Build reusable presets in a searchable Scratch-style editor, then run OP, deOP, kill, kick, ban and continuous block-under-player actions from a keybind or optional join autorun.
 
 GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
@@ -16,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.6.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.6.1.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -30,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.6.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+A játékba telepíthető JAR a build/libs/aop-tools-1.6.1.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
 
 ### Prism Launcher fejlesztői példány
 

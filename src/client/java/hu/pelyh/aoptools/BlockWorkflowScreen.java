@@ -88,18 +88,18 @@ public final class BlockWorkflowScreen extends Screen {
         int fieldWidth = paletteWidth - 16;
         searchBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 18, fieldWidth, 18, Component.literal("Keresés")));
         searchBox.setMaxLength(40);
-        searchBox.setHint(Component.literal("Keresés: op, kill, blokk..."));
+        searchBox.setHint(Component.literal("Keresés"));
         searchBox.setResponder(value -> paletteScroll = 0);
 
         int halfWidth = (fieldWidth - 4) / 2;
         targetBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 39, halfWidth, 18, Component.literal("XY játékos")));
         targetBox.setMaxLength(16);
         targetBox.setFilter(value -> value.isEmpty() || OperatorAutomation.isValidPlayerName(value));
-        targetBox.setHint(Component.literal("XY játékosnév, pl. Steve"));
+        targetBox.setHint(Component.literal("XY név"));
 
         blockBox = addRenderableWidget(new EditBox(font, paletteX + 12 + halfWidth, BODY_TOP + 39, fieldWidth - halfWidth - 4, 18, Component.literal("Blokk")));
         blockBox.setMaxLength(80);
-        blockBox.setHint(Component.literal("Blokk, pl. tnt vagy minecraft:tnt"));
+        blockBox.setHint(Component.literal("blokk: tnt"));
 
         int bottomY = height - 24;
         int buttonWidth = Math.max(92, Math.min(145, (width - 32) / 3));
