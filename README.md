@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.6.1.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.7.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,24 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.6.1.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+A játékba telepíthető JAR a build/libs/aop-tools-1.7.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+
+## Optimalizált kliens és kompatibilitás
+
+Az AOP Tools kliensoldali Meteor addon, nem módosítja a világ renderelését, a chunkkezelést vagy a hálózati protokollt, ezért együtt használható az alábbi Fabric 1.21.11-es optimalizáló és diagnosztikai modokkal. Ezek opcionálisak: az AOP Tools nélkülük is működik.
+
+- **Sodium** – gyorsabb kliensoldali renderelés és jobb képkockaidő.
+- **Entity Culling** – a nem látható entitások és blokkentitások renderelésének kihagyása.
+- **FerriteCore** – memóriahasználat csökkentése.
+- **Lithium** – játékmenet- és ticklogika optimalizálása.
+- **ImmediatelyFast** – GUI, HUD, szöveg, entitás és immediate-mode renderelés gyorsítása.
+- **Krypton** – hálózati verem optimalizálása.
+- **Clumps** – XP-gömbök összevonása; modern Minecraft-verziókon a tényleges hatásához a szerverre is telepíteni kell.
+- **Fast IP Ping** – a szerverlista pingelésének gyorsítása.
+- **FastQuit** – egyjátékos világ mentése a háttérben, gyorsabb visszatérés a főmenübe.
+- **spark** – teljesítményprofilozó; mérésre és hibakeresésre szolgál, önmagában nem növeli az FPS-t.
+
+A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. OptiFine/OptiFabric nincs a javasolt összeállításban, mert ütközhet a Sodium és az ImmediatelyFast működésével.
 
 ### Prism Launcher fejlesztői példány
 

@@ -3,7 +3,7 @@
   "id": "aoptools",
   "version": "${version}",
   "name": "AOP Tools",
-  "description": "Meteor Client modules for operator management, join automation and a Scratch-like command block editor.",
+  "description": "A searchable preset-based Meteor Client workflow editor for authorized server administration and player pranks.",
   "authors": [
     "pelyh"
   ],
@@ -28,5 +28,17 @@
     "java": ">=21",
     "fabric-api": "*",
     "meteor-client": "*"
+  },
+  "suggests": {
+    "sodium": "*",
+    "entityculling": "*",
+    "ferritecore": "*",
+    "lithium": "*",
+    "immediatelyfast": "*",
+    "krypton": "*",
+    "clumps": "*",
+    "fastipping": "*",
+    "fastquit": "*",
+    "spark": "*"
   }
 }
