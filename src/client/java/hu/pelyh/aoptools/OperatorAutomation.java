@@ -21,17 +21,28 @@ public final class OperatorAutomation {
     private List<WorkflowBlock> continuousBlocks = List.of();
     private int commandCooldown;
     private int continuousCountdown;
+    private int autoRunCountdown = -1;
 
     public OperatorAutomation(OpEveryoneModule opEveryone, BlockWorkflowModule blockWorkflow) {
         this.opEveryone = opEveryone;
         this.blockWorkflow = blockWorkflow;
     }
 
-    public void onJoin() { cancelAll(); }
+    public void onJoin() {
+        cancelAll();
+        autoRunCountdown = blockWorkflow.autoRun.get() ? 60 : -1;
+    }
     public void onDisconnect() { cancelAll(); }
 
     public void tick(Minecraft client) {
         if (!isConnected(client)) { cancelAll(); return; }
+        if (autoRunCountdown > 0) {
+            autoRunCountdown--;
+            if (autoRunCountdown == 0) {
+                Result result = toggleWorkflow(client, true, false);
+                tell(client, "Autorun: " + result.message(), result.success() ? ChatFormatting.GREEN : ChatFormatting.RED);
+            }
+        }
         if (!continuousBlocks.isEmpty()) {
             if (continuousCountdown > 0) continuousCountdown--;
             else {
@@ -102,7 +113,7 @@ public final class OperatorAutomation {
     }
 
     private void cancelAll() {
-        commandQueue.clear(); continuousBlocks = List.of(); commandCooldown = 0; continuousCountdown = 0;
+        commandQueue.clear(); continuousBlocks = List.of(); commandCooldown = 0; continuousCountdown = 0; autoRunCountdown = -1;
     }
 
     public static boolean isValidPlayerName(String name) {

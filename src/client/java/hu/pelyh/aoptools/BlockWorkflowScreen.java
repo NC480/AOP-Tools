@@ -17,18 +17,23 @@ import java.util.Locale;
 public final class BlockWorkflowScreen extends Screen {
     private static final int BLOCK_HEIGHT = 17;
     private static final int BLOCK_GAP = 3;
-    private static final int BODY_TOP = 47;
+    private static final int BODY_TOP = 68;
 
     private final BlockWorkflowModule module;
     private final OperatorAutomation automation;
     private final Screen parent;
-    private final List<WorkflowBlock> blocks;
+    private final List<WorkflowPreset> presets;
+    private List<WorkflowBlock> blocks;
+    private int currentPresetIndex;
+    private EditBox presetNameBox;
     private EditBox searchBox;
     private EditBox targetBox;
     private EditBox blockBox;
     private Button selfButton;
     private DelaySlider delaySlider;
     private Button runButton;
+    private Button activeButton;
+    private Button autoRunButton;
     private WorkflowBlock dragging;
     private int dragOriginalIndex = -1;
     private int paletteScroll;
@@ -42,17 +47,41 @@ public final class BlockWorkflowScreen extends Screen {
         this.module = module;
         this.automation = automation;
         this.parent = parent;
-        this.blocks = new ArrayList<>(module.blocks());
+        this.presets = new ArrayList<>(module.presets());
+        this.currentPresetIndex = module.activePresetIndex(presets);
+        this.blocks = new ArrayList<>(presets.get(currentPresetIndex).blocks());
     }
 
     @Override
     protected void init() {
+        int presetY = 22;
+        addRenderableWidget(Button.builder(Component.literal("<"), button -> selectPreset(currentPresetIndex - 1))
+                .bounds(12, presetY, 22, 20).build());
+        presetNameBox = addRenderableWidget(new EditBox(font, 37, presetY, 105, 20, Component.literal("Preset neve")));
+        presetNameBox.setMaxLength(24);
+        presetNameBox.setValue(presets.get(currentPresetIndex).name());
+        presetNameBox.setResponder(value -> renameCurrentPreset(value));
+        addRenderableWidget(Button.builder(Component.literal(">"), button -> selectPreset(currentPresetIndex + 1))
+                .bounds(145, presetY, 22, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("+ Új"), button -> newPreset())
+                .bounds(171, presetY, 48, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("Törlés"), button -> deletePreset())
+                .bounds(223, presetY, 52, 20).build());
+        activeButton = addRenderableWidget(Button.builder(Component.empty(), button -> {
+            storeCurrentPreset();
+            module.activePreset.set(presets.get(currentPresetIndex).name());
+            save(); refreshButtons();
+        }).bounds(279, presetY, 82, 20).build());
+        autoRunButton = addRenderableWidget(Button.builder(Component.empty(), button -> {
+            module.autoRun.set(!module.autoRun.get()); refreshButtons();
+        }).bounds(365, presetY, Math.max(95, width - 377), 20).build());
+
         int optionWidth = Math.max(120, Math.min(190, (width - 36) / 2));
         selfButton = addRenderableWidget(Button.builder(Component.empty(), button -> {
             module.excludeSelf.set(!module.excludeSelf.get());
             refreshButtons();
-        }).bounds(12, 22, optionWidth, 20).build());
-        delaySlider = addRenderableWidget(new DelaySlider(width - 12 - optionWidth, 22, optionWidth, 20));
+        }).bounds(12, 43, optionWidth, 20).build());
+        delaySlider = addRenderableWidget(new DelaySlider(width - 12 - optionWidth, 43, optionWidth, 20));
 
         int paletteX = 12;
         int paletteWidth = paletteWidth();
@@ -62,12 +91,13 @@ public final class BlockWorkflowScreen extends Screen {
         searchBox.setHint(Component.literal("Keresés: op, kill, blokk..."));
         searchBox.setResponder(value -> paletteScroll = 0);
 
-        targetBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 39, fieldWidth, 18, Component.literal("XY játékos")));
+        int halfWidth = (fieldWidth - 4) / 2;
+        targetBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 39, halfWidth, 18, Component.literal("XY játékos")));
         targetBox.setMaxLength(16);
         targetBox.setFilter(value -> value.isEmpty() || OperatorAutomation.isValidPlayerName(value));
         targetBox.setHint(Component.literal("XY játékosnév, pl. Steve"));
 
-        blockBox = addRenderableWidget(new EditBox(font, paletteX + 8, BODY_TOP + 60, fieldWidth, 18, Component.literal("Blokk")));
+        blockBox = addRenderableWidget(new EditBox(font, paletteX + 12 + halfWidth, BODY_TOP + 39, fieldWidth - halfWidth - 4, 18, Component.literal("Blokk")));
         blockBox.setMaxLength(80);
         blockBox.setHint(Component.literal("Blokk, pl. tnt vagy minecraft:tnt"));
 
@@ -86,17 +116,21 @@ public final class BlockWorkflowScreen extends Screen {
 
     private int paletteWidth() { return Math.max(205, Math.min(300, (int) (width * 0.45))); }
     private int bodyBottom() { return height - 46; }
-    private int paletteViewportTop() { return BODY_TOP + 82; }
+    private int paletteViewportTop() { return BODY_TOP + 61; }
     private int workspaceX() { return 22 + paletteWidth(); }
 
     private void refreshButtons() {
         selfButton.setMessage(Component.literal("Saját fiók: " + (module.excludeSelf.get() ? "KIHAGY" : "BENNE")));
+        String current = presets.get(currentPresetIndex).name();
+        activeButton.setMessage(Component.literal(current.equalsIgnoreCase(module.activePreset.get()) ? "AKTÍV ✓" : "Aktívvá tesz"));
+        autoRunButton.setMessage(Component.literal("Autorun: " + (module.autoRun.get() ? "BE" : "KI")));
         delaySlider.refreshFromSetting();
         runButton.setMessage(Component.literal(runArmed ? "BIZTOSAN FUTTATOD?" : "Futtatás / leállítás"));
     }
 
     private void runNow() {
         save();
+        module.activePreset.set(presets.get(currentPresetIndex).name());
         if (module.containsDangerousBlock() && !runArmed) {
             runArmed = true;
             notice("KILL/KICK/BAN van a programban. Kattints még egyszer!", ChatFormatting.RED);
@@ -117,7 +151,74 @@ public final class BlockWorkflowScreen extends Screen {
                 .toList();
     }
 
-    private void save() { module.saveBlocks(blocks); }
+    private void storeCurrentPreset() {
+        String oldName = presets.get(currentPresetIndex).name();
+        String requested = presetNameBox == null ? oldName : presetNameBox.getValue();
+        String name = uniqueName(WorkflowPreset.cleanName(requested), currentPresetIndex);
+        presets.set(currentPresetIndex, new WorkflowPreset(name, blocks));
+        if (oldName.equalsIgnoreCase(module.activePreset.get())) module.activePreset.set(name);
+        if (presetNameBox != null && !presetNameBox.getValue().equals(name)) presetNameBox.setValue(name);
+    }
+
+    private void save() {
+        storeCurrentPreset();
+        module.savePresets(presets);
+    }
+
+    private void renameCurrentPreset(String requested) {
+        if (requested == null || requested.isBlank()) return;
+        String oldName = presets.get(currentPresetIndex).name();
+        String newName = uniqueName(WorkflowPreset.cleanName(requested), currentPresetIndex);
+        presets.set(currentPresetIndex, new WorkflowPreset(newName, blocks));
+        if (oldName.equalsIgnoreCase(module.activePreset.get())) module.activePreset.set(newName);
+    }
+
+    private String uniqueName(String base, int ignoredIndex) {
+        String candidate = base;
+        int suffix = 2;
+        while (nameExists(candidate, ignoredIndex)) candidate = WorkflowPreset.cleanName(base + " " + suffix++);
+        return candidate;
+    }
+
+    private boolean nameExists(String name, int ignoredIndex) {
+        for (int i = 0; i < presets.size(); i++) {
+            if (i != ignoredIndex && presets.get(i).name().equalsIgnoreCase(name)) return true;
+        }
+        return false;
+    }
+
+    private void selectPreset(int wantedIndex) {
+        storeCurrentPreset();
+        currentPresetIndex = Math.floorMod(wantedIndex, presets.size());
+        blocks = new ArrayList<>(presets.get(currentPresetIndex).blocks());
+        presetNameBox.setValue(presets.get(currentPresetIndex).name());
+        sequenceScroll = 0; runArmed = false; save(); refreshButtons();
+        notice("Preset kiválasztva: " + presets.get(currentPresetIndex).name(), ChatFormatting.AQUA);
+    }
+
+    private void newPreset() {
+        storeCurrentPreset();
+        String name = uniqueName("Új preset", -1);
+        presets.add(WorkflowPreset.empty(name));
+        currentPresetIndex = presets.size() - 1;
+        blocks = new ArrayList<>();
+        presetNameBox.setValue(name);
+        sequenceScroll = 0; save(); refreshButtons();
+        notice("Új üres preset-konténer létrehozva.", ChatFormatting.GREEN);
+    }
+
+    private void deletePreset() {
+        if (presets.size() == 1) {
+            notice("Legalább egy presetnek maradnia kell.", ChatFormatting.RED); return;
+        }
+        String removed = presets.remove(currentPresetIndex).name();
+        currentPresetIndex = Math.min(currentPresetIndex, presets.size() - 1);
+        blocks = new ArrayList<>(presets.get(currentPresetIndex).blocks());
+        presetNameBox.setValue(presets.get(currentPresetIndex).name());
+        if (removed.equalsIgnoreCase(module.activePreset.get())) module.activePreset.set(presets.get(currentPresetIndex).name());
+        sequenceScroll = 0; save(); refreshButtons();
+        notice("Preset törölve: " + removed, ChatFormatting.YELLOW);
+    }
     private void notice(String message, ChatFormatting color) {
         notice = message;
         noticeColor = color.getColor() == null ? 0xFFFFFFFF : 0xFF000000 | color.getColor();
@@ -143,7 +244,9 @@ public final class BlockWorkflowScreen extends Screen {
         clampPaletteScroll(rows, types.size());
         int shownTypes = Math.min(Math.max(0, types.size() - paletteScroll), rows);
         graphics.drawString(font, "BLOKKOK • " + types.size() + " találat", paletteX + 8, BODY_TOP + 6, 0xFFFFFFFF);
-        graphics.drawString(font, "PROGRAM – fentről lefelé", workspaceX + 8, BODY_TOP + 7, 0xFFFFFFFF);
+        String presetTitle = "PRESET-KONTÉNER: " + presets.get(currentPresetIndex).name();
+        if (presets.get(currentPresetIndex).name().equalsIgnoreCase(module.activePreset.get())) presetTitle += "  [AKTÍV]";
+        graphics.drawString(font, presetTitle, workspaceX + 8, BODY_TOP + 7, 0xFFFFFFFF);
         graphics.enableScissor(paletteX + 1, viewportTop, paletteX + paletteWidth - 1, bodyBottom - 1);
         for (int row = 0; row < shownTypes; row++) {
             WorkflowBlock.Type type = types.get(paletteScroll + row);

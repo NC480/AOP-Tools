@@ -16,7 +16,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.5.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.6.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -30,7 +30,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.5.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+A játékba telepíthető JAR a build/libs/aop-tools-1.6.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
 
 ### Prism Launcher fejlesztői példány
 
@@ -65,6 +65,10 @@ Bal kattintással azonnal megnyílik a Scratch-szerű editor. Jobb kattintás ut
 - BLOKK XY LÁBA ALÁ – folyamatosan a megadott játékos alá helyezi a blokkot.
 
 A bal oldali kereső szűri a blokkpalettát. Az XY mezőben a játékosnév, a blokkmezőben például `tnt`, `minecraft:tnt` vagy más érvényes blokkazonosító adható meg. A paletta szélesebb, a blokkok kisebbek, így egyszerre több látható. A program fentről lefelé fut; a blokkok áthúzással átrendezhetők, jobb kattintással törölhetők, az egérgörgővel pedig mindkét oszlop mozgatható.
+
+### Preset-konténerek
+
+A jobb oldali terület egy elnevezhető preset-konténer: a belehúzott blokkok együtt alkotnak egy presetet. A felső sor `<` és `>` gombjaival válthatsz közöttük, a `+ Új` gombbal új konténert készíthetsz, majd az **Aktívvá tesz** gombbal kiválaszthatod, melyik fusson a bind megnyomásakor. Az **Autorun** kapcsoló belépés után automatikusan az aktív presetet indítja el. A korábbi egyetlen blokkprogram első megnyitáskor automatikusan az `Alap` presetbe kerül.
 
 A Parancs Blokkok modulhoz beállított billentyű- vagy egérbind játék közben azonnal lefuttatja a mentett programot, és nem nyitja meg az editort. A Meteor csempére kattintás és az /aop editor parancs továbbra is a szerkesztőt nyitja meg.
 

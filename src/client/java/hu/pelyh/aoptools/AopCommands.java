@@ -43,7 +43,9 @@ public final class AopCommands {
 
     private int status(FabricClientCommandSource source) {
         reply(source, "Meteor GUI: AOP Manager kategória", ChatFormatting.AQUA);
-        reply(source, "Parancs Blokkok: " + blockWorkflow.blocks().size() + " blokk", ChatFormatting.GRAY);
+        reply(source, "Presetek: " + blockWorkflow.presets().size() + " | aktív: "
+                + blockWorkflow.activePreset.get() + " | " + blockWorkflow.blocks().size()
+                + " blokk | autorun: " + onOff(blockWorkflow.autoRun.get()), ChatFormatting.GRAY);
         reply(source, "Futó parancssor: " + onOff(automation.isBusy()), ChatFormatting.GRAY);
         return 1;
     }

@@ -4,6 +4,7 @@ import meteordevelopment.meteorclient.settings.IntSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.settings.StringListSetting;
+import meteordevelopment.meteorclient.settings.StringSetting;
 import meteordevelopment.meteorclient.gui.GuiTheme;
 import meteordevelopment.meteorclient.gui.widgets.WWidget;
 import meteordevelopment.meteorclient.gui.widgets.containers.WTable;
@@ -21,6 +22,27 @@ public final class BlockWorkflowModule extends Module {
             .name("mentett-blokkok")
             .description("A blokkeditor mentett parancssora.")
             .defaultValue()
+            .visible(() -> false)
+            .build());
+
+    public final Setting<List<String>> presetStorage = storage.add(new StringListSetting.Builder()
+            .name("presetek")
+            .description("A blokkeditor mentett preset-konténerei.")
+            .defaultValue()
+            .visible(() -> false)
+            .build());
+
+    public final Setting<String> activePreset = storage.add(new StringSetting.Builder()
+            .name("aktiv-preset")
+            .description("A bind és az autorun által futtatott preset neve.")
+            .defaultValue("Alap")
+            .visible(() -> false)
+            .build());
+
+    public final Setting<Boolean> autoRun = storage.add(new meteordevelopment.meteorclient.settings.BoolSetting.Builder()
+            .name("aktiv-preset-autorun")
+            .description("Belépéskor automatikusan lefuttatja az aktív presetet.")
+            .defaultValue(false)
             .visible(() -> false)
             .build());
 
@@ -53,16 +75,51 @@ public final class BlockWorkflowModule extends Module {
     }
 
     public List<WorkflowBlock> blocks() {
+        List<WorkflowPreset> presets = presets();
+        for (WorkflowPreset preset : presets) {
+            if (preset.name().equalsIgnoreCase(activePreset.get())) return preset.blocks();
+        }
+        return presets.getFirst().blocks();
+    }
+
+    public List<WorkflowPreset> presets() {
+        List<WorkflowPreset> presets = new ArrayList<>();
+        for (String encoded : presetStorage.get()) {
+            WorkflowPreset preset = WorkflowPreset.decode(encoded);
+            if (preset != null) presets.add(preset);
+        }
+        if (!presets.isEmpty()) return presets;
+
         List<WorkflowBlock> result = new ArrayList<>();
         for (String encoded : workflow.get()) {
             WorkflowBlock block = WorkflowBlock.decode(encoded);
             if (block != null) result.add(block);
         }
-        return result;
+        return List.of(new WorkflowPreset("Alap", result));
     }
 
     public void saveBlocks(List<WorkflowBlock> blocks) {
-        workflow.set(blocks.stream().map(WorkflowBlock::encode).toList());
+        List<WorkflowPreset> presets = new ArrayList<>(presets());
+        int index = activePresetIndex(presets);
+        presets.set(index, new WorkflowPreset(presets.get(index).name(), blocks));
+        savePresets(presets);
+    }
+
+    public void savePresets(List<WorkflowPreset> presets) {
+        List<WorkflowPreset> safe = presets == null || presets.isEmpty()
+                ? List.of(WorkflowPreset.empty("Alap")) : List.copyOf(presets);
+        presetStorage.set(safe.stream().map(WorkflowPreset::encode).toList());
+        if (safe.stream().noneMatch(p -> p.name().equalsIgnoreCase(activePreset.get()))) {
+            activePreset.set(safe.getFirst().name());
+        }
+        workflow.set(List.of());
+    }
+
+    public int activePresetIndex(List<WorkflowPreset> presets) {
+        for (int i = 0; i < presets.size(); i++) {
+            if (presets.get(i).name().equalsIgnoreCase(activePreset.get())) return i;
+        }
+        return 0;
     }
 
     public boolean containsDangerousBlock() {
@@ -99,6 +156,9 @@ public final class BlockWorkflowModule extends Module {
         table.row();
         table.add(theme.label("Folyamatos blokk ALL/XY lába alá • bind: indítás/leállítás", false)).expandX();
         table.row();
+        table.add(theme.label("Presetek: " + presets().size() + " • aktív: " + activePreset.get()
+                + " • autorun: " + (autoRun.get() ? "BE" : "KI"), false)).expandX();
+        table.row();
 
         WButton open = table.add(theme.button("BLOKKEDITOR MEGNYITÁSA")).expandX().widget();
         open.action = this::openEditor;
@@ -107,6 +167,6 @@ public final class BlockWorkflowModule extends Module {
 
     @Override
     public String getInfoString() {
-        return blocks().size() + " blokk";
+        return activePreset.get() + " • " + blocks().size() + " blokk";
     }
 }
