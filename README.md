@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.7.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.7.1.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.7.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+A játékba telepíthető JAR a build/libs/aop-tools-1.7.1.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -50,6 +50,31 @@ Az AOP Tools kliensoldali Meteor addon, nem módosítja a világ renderelését,
 - **spark** – teljesítményprofilozó; mérésre és hibakeresésre szolgál, önmagában nem növeli az FPS-t.
 
 A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. OptiFine/OptiFabric nincs a javasolt összeállításban, mert ütközhet a Sodium és az ImmediatelyFast működésével.
+
+### Ellenőrzött Huncut Optimized összeállítás
+
+| Komponens | Verzió |
+|---|---|
+| Minecraft | 1.21.11 |
+| Fabric Loader | 0.20.1 |
+| Fabric API | 0.141.6+1.21.11 |
+| Meteor Client | 1.21.11 build 86 |
+| AOP Tools | 1.7.1 |
+| Sodium | 0.8.14 |
+| Entity Culling | 1.12.1 |
+| FerriteCore | 8.2.0 |
+| Lithium | 0.21.4 |
+| ImmediatelyFast | 1.14.3 |
+| Krypton | 0.2.10 |
+| Clumps | 29.0.0.1 |
+| Fast IP Ping | 1.0.12 |
+| FastQuit | 3.1.3 |
+| spark | 1.10.170 |
+| Cloth Config | 21.11.153 |
+
+### Importálható Prism Launcher-csomag
+
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.7.1.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.7.1/aop-tools-huncut-optimized-1.7.1.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött modletöltéseket írja le.
 
 ### Prism Launcher fejlesztői példány
 
