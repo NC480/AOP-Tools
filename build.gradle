@@ -1,0 +1,94 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	maven {
+		name = 'Meteor Releases'
+		url = 'https://maven.meteordev.org/releases'
+	}
+	maven {
+		name = 'Meteor Snapshots'
+		url = 'https://maven.meteordev.org/snapshots'
+	}
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"aoptools" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	modImplementation "meteordevelopment:meteor-client:${project.meteor_version}"
+}
+
+processResources {
+	def modVersion = project.version
+	inputs.property "version", modVersion
+	filesMatching("fabric.mod.json") {
+		expand "version": modVersion
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+	def archiveName = base.archivesName.get()
+	inputs.property "archiveName", archiveName
+	from("LICENSE") {
+		rename { "${it}_${archiveName}" }
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+}
+
+def huncutModsDir = new File(System.getenv('APPDATA'), 'PrismLauncher/instances/huncut/.minecraft/mods')
+
+tasks.register('deployToHuncut', Copy) {
+	group = 'distribution'
+	description = 'Builds and installs the addon into the Prism Launcher huncut instance.'
+	dependsOn tasks.named('remapJar')
+	from tasks.named('remapJar').flatMap { it.archiveFile }
+	into huncutModsDir
+
+	doFirst {
+		huncutModsDir.mkdirs()
+		def previousJars = huncutModsDir.listFiles({ File dir, String name ->
+			name.startsWith('aop-tools-') && name.endsWith('.jar')
+		} as FilenameFilter)
+		previousJars?.each { it.delete() }
+	}
+}

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "aoptools",
+  "version": "${version}",
+  "name": "AOP Tools",
+  "description": "Meteor Client modules for operator management, join automation and a Scratch-like command block editor.",
+  "authors": [
+    "pelyh"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "meteor": [
+      "hu.pelyh.aoptools.AopToolsAddon"
+    ]
+  },
+  "custom": {
+    "meteor-client:color": "40,160,255",
+    "modmenu": {
+      "parent": {
+        "id": "meteor-client"
+      }
+    }
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*",
+    "meteor-client": "*"
+  }
+}
