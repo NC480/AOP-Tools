@@ -39,6 +39,7 @@
     "clumps": "*",
     "fastipping": "*",
     "fastquit": "*",
-    "spark": "*"
+    "spark": "*",
+    "exploitpreventer": "*"
   }
 }
