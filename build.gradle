@@ -75,7 +75,10 @@ publishing {
 	}
 }
 
-def huncutModsDir = new File(System.getenv('APPDATA'), 'PrismLauncher/instances/huncut/.minecraft/mods')
+def appDataDir = System.getenv('APPDATA')
+def huncutModsDir = appDataDir != null
+		? new File((String) appDataDir, 'PrismLauncher/instances/huncut/.minecraft/mods')
+		: layout.buildDirectory.dir('unused-huncut-mods').get().asFile
 
 tasks.register('deployToHuncut', Copy) {
 	group = 'distribution'
