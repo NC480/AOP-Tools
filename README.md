@@ -2,6 +2,10 @@
 
 Meteor Client addon szerveradminisztrációhoz, automatikus OP-kezeléshez, belépési parancsokhoz és egy Scratch-szerű blokkeditorhoz.
 
+**AOP Tools is a Minecraft 1.21.11 Fabric mod and Meteor Client addon with a Scratch-style command-block editor for authorized server administration.** It supports OP, deOP, kill, kick and ban workflows with ALL and named-player (XY) variants.
+
+GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
+
 ## Követelmények
 
 - Minecraft Java Edition 1.21.11
