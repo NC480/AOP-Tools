@@ -2,9 +2,9 @@
 
 ## Mi ez?
 
-Az AOP Tools egy Minecraft 1.21.11-es Fabric mod és Meteor Client addon saját szerverek adminisztrálásához és játékos tréfák készítéséhez. A kereshető, Scratch-szerű editorban színes blokkokból állíthatsz össze OP, deOP, kill, kick, ban és láb-alá blokkot helyező műveleteket. A programokat elnevezett presetekbe mentheted, majd bindről vagy opcionálisan belépéskor futtathatod.
+Az AOP Tools egy Minecraft 1.21.11-es Fabric mod és Meteor Client addon saját szerverek adminisztrálásához, játékos tréfák készítéséhez és korlátozott helyi terheléspróbához. A kereshető, Scratch-szerű editorban színes blokkokból állíthatsz össze OP, deOP, kill, kick, ban és láb-alá blokkot helyező műveleteket. A programokat elnevezett presetekbe mentheted, majd bindről vagy opcionálisan belépéskor futtathatod.
 
-**English:** AOP Tools is a Minecraft 1.21.11 Fabric mod and Meteor Client addon for authorized server administration and player pranks. Build reusable presets in a searchable Scratch-style editor, then run OP, deOP, kill, kick, ban and continuous block-under-player actions from a keybind or optional join autorun.
+**English:** AOP Tools is a Minecraft 1.21.11 Fabric mod and Meteor Client addon for authorized server administration, player pranks, and bounded local load testing. Build reusable presets in a searchable Scratch-style editor, or run up to ten rate-limited offline test clients against an explicitly confirmed localhost/private-LAN Paper server.
 
 GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.9.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.10.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.9.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+A játékba telepíthető JAR a build/libs/aop-tools-1.10.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.9.0 |
+| AOP Tools | 1.10.0 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -76,7 +76,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.9.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.9.0/aop-tools-huncut-optimized-1.9.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött modletöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.10.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.10.0/aop-tools-huncut-optimized-1.10.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött modletöltéseket írja le.
 
 ### Prism Launcher fejlesztői példány
 
@@ -92,6 +92,21 @@ $env:JAVA_HOME = "$env:APPDATA\PrismLauncher\java\java-runtime-delta"
 ### OP Mindenkinek
 
 Egy kattintásra OP-olja a kliens játékoslistáján látható összes játékost, majd kikapcsol.
+
+### Helyi stresszteszt botok
+
+A **Helyi stresszteszt botok** modul valódi Minecraft 1.21.11 klienskapcsolatokat hoz létre egy külön, háttérben futó Java-folyamatból. A botok megjelennek a játékoslistán és valódi férőhelyet foglalnak, de nem mozognak, nem írnak a chatbe és nem futtatnak parancsokat. A segédkliens a mod JAR része; első indításkor a `config/aop-tools` mappába kerül, ahol a `stress-test.log` napló is megtalálható.
+
+Biztonsági korlátok:
+
+- kizárólag `localhost`, loopback vagy közvetlen privát LAN IP-cím használható; publikus cím és hosztnév nem;
+- legfeljebb 10 bot indítható;
+- két csatlakozás között legalább 1 másodperc telik el;
+- a futási idő legfeljebb 10 perc, utána a botok automatikusan lecsatlakoznak;
+- a modul kikapcsolása azonnali szabályos leállítást kér a háttérfolyamattól;
+- a korlátokat a Meteor modul és a külön segédkliens is ellenőrzi.
+
+Használat előtt kapcsold be a **Saját szerver megerősítése** beállítást, add meg a helyi Paper szerver IP-címét és portját, majd állítsd be a botszámot, az időközt, a futási időt és a névelőtagot. Az offline botnevekhez a tesztszervernek `online-mode=false` beállítást kell használnia, és a `max-players` értéknek elegendőnek kell lennie. Ezt kizárólag elkülönített, saját tesztszerveren használd; Aternoshoz vagy más publikus szolgáltatáshoz a címkorlátozás miatt nem használható.
 
 ### Parancs Blokkok
 
@@ -145,3 +160,4 @@ A **Futtatás / leállítás** gomb elindítja a programot. Ha KILL, KICK vagy B
 - Az ALL blokkok a kliens játékoslistájából dolgoznak; a szerver által elrejtett játékosokat a kliens nem feltétlenül ismeri.
 - A dinamikus láb-alá funkció `execute` és `summon` szerverparancsokat használ. Nagyon alacsony ismétlési idő és sok játékos jelentős entitás- vagy robbanásterhelést okozhat a szerveren.
 - A KILL, KICK és BAN blokkok valódi szerverparancsokat küldenek. Teszt előtt hagyd bekapcsolva a **Saját fiók: KIHAGY** beállítást.
+- A stresszteszt modul kizárólag saját, helyi offline-mode tesztszerverhez készült. A publikus szerverek terhelése és a szolgáltatói korlátozások megkerülése nem támogatott.

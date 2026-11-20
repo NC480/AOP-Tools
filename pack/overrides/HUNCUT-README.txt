@@ -1,9 +1,9 @@
-AOP Tools - Huncut Optimized 1.9.0
+AOP Tools - Huncut Optimized 1.10.0
 
 Prism Launcher importalas:
 1. Add Instance
 2. Import
-3. Valaszd ki az aop-tools-huncut-optimized-1.9.0.mrpack fajlt.
+3. Valaszd ki az aop-tools-huncut-optimized-1.10.0.mrpack fajlt.
 
 A csomag nem tartalmaz fiokot, UUID-t, szerverlistat, vilagot, naplot,
 kepernyokepet, Meteor-profilt, AOP presetet vagy helyi gepeleresi utat.

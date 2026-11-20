@@ -3,7 +3,7 @@
   "id": "aoptools",
   "version": "${version}",
   "name": "AOP Tools",
-  "description": "A searchable preset-based Meteor Client workflow editor for authorized server administration and player pranks.",
+  "description": "A searchable Meteor workflow editor with a bounded, local-only Paper server stress-test client.",
   "authors": [
     "pelyh"
   ],

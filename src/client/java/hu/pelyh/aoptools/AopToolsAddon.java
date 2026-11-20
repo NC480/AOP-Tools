@@ -18,8 +18,10 @@ public final class AopToolsAddon extends MeteorAddon {
     public void onInitialize() {
         OpEveryoneModule opEveryone = new OpEveryoneModule();
         BlockWorkflowModule blockWorkflow = new BlockWorkflowModule();
+        LocalStressTestModule localStressTest = new LocalStressTestModule();
         Modules.get().add(opEveryone);
         Modules.get().add(blockWorkflow);
+        Modules.get().add(localStressTest);
 
         OperatorAutomation automation = new OperatorAutomation(opEveryone, blockWorkflow);
         opEveryone.bind(automation);

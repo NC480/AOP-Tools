@@ -1,11 +1,11 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.9.0",
+  "versionId": "1.10.0",
   "name": "AOP Tools - Huncut Optimized",
-  "summary": "Fabric 1.21.11 + Meteor Client + AOP Tools, curated performance stack, no private instance data.",
+  "summary": "Fabric 1.21.11 + Meteor Client + AOP Tools, local-only bounded stress clients, performance stack, no private data.",
   "files": [
-    {"path":"mods/aop-tools-1.9.0.jar","hashes":{"sha1":"06ef6367096ccf9c822a0a1509072bf09a11ffed","sha512":"4b69a40a2aad8e9ff21d462fbb3c01d6982bbd8033e3c40fc08778145cf47dc55e8f5f55520e214a47a7ecd0dab6809f32e8cb5ca587b53bd3db2eb574a64bf1"},"env":{"client":"required","server":"unsupported"},"downloads":["https://github.com/NC480/AOP-Tools/releases/download/v1.9.0/aop-tools-1.9.0.jar"],"fileSize":48129},
+    {"path":"mods/aop-tools-1.10.0.jar","hashes":{"sha1":"e346221446c2f22bf367b67c7fce5b320e43530a","sha512":"f47a2ee82cd904e052ebe89809888b8f7e25d4c2aab211926dacc02279b84f2b939eb2afb75a45b8fcc7d1999d0680dce0e90f90f889a1cf59802d4630a0a82e"},"env":{"client":"required","server":"unsupported"},"downloads":["https://github.com/NC480/AOP-Tools/releases/download/v1.10.0/aop-tools-1.10.0.jar"],"fileSize":21062161},
     {"path":"mods/cloth-config-21.11.153-fabric.jar","hashes":{"sha1":"4c224606a963bce223db5b27edb4959ecf40d4ee","sha512":"8f455489d4b71069e998568cf4e1450116f4360a4eb481cd89117f629c6883164886cf63ca08ac4fc929dd13d1112152755a6216d4a1498ee6406ef102093e51"},"env":{"client":"required","server":"unsupported"},"downloads":["https://cdn.modrinth.com/data/9s6osm5g/versions/xuX40TN5/cloth-config-21.11.153-fabric.jar"],"fileSize":1148427},
     {"path":"mods/Clumps-fabric-1.21.11-29.0.0.1.jar","hashes":{"sha1":"626fde9e970030cfc8cb64cd0a1abfc03d37ecc2","sha512":"3cff3cd2d600a6d84030b38ce6244143d13774d5287627bb7312adae5edc7ae2d9151a2c9c39a00681c354d549b0a62ac48c0077ba586cc10c00d32f39e87f18"},"env":{"client":"required","server":"unsupported"},"downloads":["https://cdn.modrinth.com/data/Wnxd13zP/versions/OgBE8Rz4/Clumps-fabric-1.21.11-29.0.0.1.jar"],"fileSize":20355},
     {"path":"mods/entityculling-fabric-1.12.1-mc1.21.11.jar","hashes":{"sha1":"75ede5f8df348f49102d16eb76da3dd1491dfb79","sha512":"e29d188c0eb37ca0980b906bfd48efc2657fbf606ed3ac2f57dbf585e455a7356129843d490455c0ae0b27c3646eddc97f34d1db238ea0fdcf9d1dac650324a0"},"env":{"client":"required","server":"unsupported"},"downloads":["https://cdn.modrinth.com/data/NNAgCjsB/versions/hsBqkNc8/entityculling-fabric-1.12.1-mc1.21.11.jar"],"fileSize":1543255},

@@ -19,6 +19,20 @@ repositories {
 		name = 'Meteor Snapshots'
 		url = 'https://maven.meteordev.org/snapshots'
 	}
+	maven {
+		name = 'OpenCollab Snapshots'
+		url = 'https://repo.opencollab.dev/maven-snapshots/'
+	}
+	maven {
+		name = 'OpenCollab Releases'
+		url = 'https://repo.opencollab.dev/main/'
+	}
+}
+
+sourceSets {
+	stressClient {
+		java.srcDir 'src/stressClient/java'
+	}
 }
 
 loom {
@@ -38,13 +52,38 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	modImplementation "meteordevelopment:meteor-client:${project.meteor_version}"
+	stressClientImplementation 'org.geysermc.mcprotocollib:protocol:1.21.11-SNAPSHOT'
+	stressClientImplementation 'org.slf4j:slf4j-simple:2.0.17'
+}
+
+def stressClientJar = tasks.register('stressClientJar', Jar) {
+	group = 'build'
+	description = 'Builds the local-only, rate-limited Minecraft stress-test client.'
+	archiveFileName = 'aop-stress-client.jar'
+	destinationDirectory = layout.buildDirectory.dir('stress-client')
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	manifest {
+		attributes 'Main-Class': 'hu.pelyh.aoptools.stress.LocalStressBotRunner'
+	}
+	from sourceSets.stressClient.output
+	from {
+		configurations.stressClientRuntimeClasspath.collect { dependency ->
+			dependency.isDirectory() ? dependency : zipTree(dependency)
+		}
+	}
+	exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
 }
 
 processResources {
+	dependsOn stressClientJar
 	def modVersion = project.version
 	inputs.property "version", modVersion
 	filesMatching("fabric.mod.json") {
 		expand "version": modVersion
+	}
+	from(stressClientJar.flatMap { it.archiveFile }) {
+		into 'aoptools'
+		rename { 'aop-stress-client.jar' }
 	}
 }
 
