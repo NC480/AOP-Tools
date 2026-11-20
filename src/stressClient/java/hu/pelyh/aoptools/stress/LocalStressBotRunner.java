@@ -16,7 +16,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -27,7 +29,7 @@ public final class LocalStressBotRunner {
     private LocalStressBotRunner() { }
 
     public static void main(String[] args) {
-        if (args.length != 6) fail("Hibás paraméterszám.");
+        if (args.length != 7) fail("Hibás paraméterszám.");
         try {
             InetAddress address = InetAddress.getByName(args[0]);
             int port = Integer.parseInt(args[1]);
@@ -35,7 +37,9 @@ public final class LocalStressBotRunner {
             int delaySeconds = Integer.parseInt(args[3]);
             int durationMinutes = Integer.parseInt(args[4]);
             String prefix = args[5];
-            validate(address, port, count, delaySeconds, durationMinutes, prefix);
+            Set<String> whitelist = Set.of(new String(Base64.getUrlDecoder().decode(args[6]),
+                    StandardCharsets.UTF_8).split("\\R"));
+            validate(address, port, count, delaySeconds, durationMinutes, prefix, whitelist);
 
             CountDownLatch stop = new CountDownLatch(1);
             List<ClientSession> sessions = new ArrayList<>();
@@ -111,7 +115,7 @@ public final class LocalStressBotRunner {
     }
 
     private static void validate(InetAddress address, int port, int count, int delaySeconds,
-                                 int durationMinutes, String prefix) {
+                                 int durationMinutes, String prefix, Set<String> whitelist) {
         if (!address.isLoopbackAddress() && !address.isSiteLocalAddress() && !address.isLinkLocalAddress())
             fail("Csak loopback vagy privát LAN-cím engedélyezett.");
         if (port < 1 || port > 65535) fail("Érvénytelen port.");
@@ -119,6 +123,9 @@ public final class LocalStressBotRunner {
         if (delaySeconds < 1 || delaySeconds > 10) fail("A csatlakozási időköz 1-10 másodperc lehet.");
         if (durationMinutes < 1 || durationMinutes > 10) fail("A futási idő 1-10 perc lehet.");
         if (!PREFIX.matcher(prefix).matches()) fail("Érvénytelen botnév-előtag.");
+        String host = address.getHostAddress();
+        String endpoint = (host.contains(":") ? "[" + host + "]" : host) + ":" + port;
+        if (!whitelist.contains(endpoint)) fail("A cél nincs a bot szerver-whitelistjén.");
     }
 
     private static void fail(String message) {

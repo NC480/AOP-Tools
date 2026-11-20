@@ -9,6 +9,7 @@ import meteordevelopment.meteorclient.systems.modules.Module;
 
 public final class LocalStressTestModule extends Module {
     private final SettingGroup general = settings.getDefaultGroup();
+    private final StressServerWhitelistModule whitelist;
     private final LocalStressBotController controller = new LocalStressBotController(() -> mc.execute(() -> {
         if (isActive()) {
             info("A helyi stresszteszt befejeződött vagy a segédkliens kilépett.");
@@ -66,9 +67,10 @@ public final class LocalStressTestModule extends Module {
             .defaultValue("AOPTest")
             .build());
 
-    public LocalStressTestModule() {
+    public LocalStressTestModule(StressServerWhitelistModule whitelist) {
         super(AopToolsAddon.CATEGORY, "helyi-stresszteszt-botok",
                 "Korlátozott offline tesztklienseket csatlakoztat kizárólag saját localhost/LAN Paper szerverhez.");
+        this.whitelist = whitelist;
         runInMainMenu = true;
     }
 
@@ -82,7 +84,7 @@ public final class LocalStressTestModule extends Module {
 
         LocalStressBotController.Result result = controller.start(mc,
                 host.get(), port.get(), botCount.get(), connectionDelaySeconds.get(),
-                durationMinutes.get(), namePrefix.get());
+                durationMinutes.get(), namePrefix.get(), whitelist.entries());
         if (!result.success()) {
             error(result.message());
             disable();

@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -29,7 +30,8 @@ final class LocalStressBotController {
     }
 
     synchronized Result start(Minecraft client, String requestedHost, int port, int count,
-                              int delaySeconds, int durationMinutes, String prefix) {
+                              int delaySeconds, int durationMinutes, String prefix,
+                              List<String> whitelistEntries) {
         if (isRunning()) return Result.error("A helyi stresszteszt már fut.");
         if (port < 1 || port > 65535) return Result.error("Érvénytelen szerverport.");
         if (count < 1 || count > 10) return Result.error("A botszám csak 1 és 10 között lehet.");
@@ -45,6 +47,11 @@ final class LocalStressBotController {
             address = resolvePrivateAddress(requestedHost);
         } catch (IOException exception) {
             return Result.error(exception.getMessage());
+        }
+        List<String> canonicalWhitelist = StressServerPolicy.canonicalEntries(whitelistEntries);
+        String endpoint = StressServerPolicy.endpoint(address, port);
+        if (!canonicalWhitelist.contains(endpoint)) {
+            return Result.error("A cél nincs a Bot szerver-whitelist listán: " + endpoint);
         }
 
         try {
@@ -66,6 +73,8 @@ final class LocalStressBotController {
             command.add(Integer.toString(delaySeconds));
             command.add(Integer.toString(durationMinutes));
             command.add(prefix.trim());
+            command.add(Base64.getUrlEncoder().withoutPadding().encodeToString(
+                    String.join("\n", canonicalWhitelist).getBytes(StandardCharsets.UTF_8)));
 
             Process started = new ProcessBuilder(command)
                     .directory(directory.toFile())
