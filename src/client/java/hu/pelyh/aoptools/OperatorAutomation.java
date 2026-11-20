@@ -4,6 +4,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -50,7 +52,8 @@ public final class OperatorAutomation {
                     String command = continuousCommand(client, block);
                     if (command != null) client.getConnection().sendCommand(command);
                 }
-                continuousCountdown = Math.max(1, blockWorkflow.commandDelayTicks.get());
+                // A beállított 1 tick valóban minden kliens tickben küldjön parancsot.
+                continuousCountdown = Math.max(0, blockWorkflow.commandDelayTicks.get() - 1);
             }
         }
         if (commandQueue.isEmpty()) return;
@@ -58,7 +61,6 @@ public final class OperatorAutomation {
         QueuedCommand queued = commandQueue.remove();
         client.getConnection().sendCommand(queued.command());
         commandCooldown = queued.delayAfterTicks();
-        if (commandQueue.isEmpty()) tell(client, "A parancssor végrehajtva.", ChatFormatting.GREEN);
     }
 
     public Result opEveryone(Minecraft client) {
@@ -101,7 +103,14 @@ public final class OperatorAutomation {
         if (commands.isEmpty() && continuous.isEmpty()) return Result.error("Nincs futtatható blokk.");
         String origin = fromBind ? " a bindről" : "";
         String ongoing = continuous.isEmpty() ? "" : " A láb-alá blokkok folyamatosan futnak; ugyanazzal a binddel leállíthatók.";
-        return Result.success(commands.size() + " egyszeri parancs elindult" + origin + "." + ongoing);
+        boolean unsupportedIgnite = blockWorkflow.autoIgnite.get() && continuous.stream()
+                .map(WorkflowBlock::value)
+                .map(WorkflowBlock::baseId)
+                .anyMatch(id -> !id.equals("minecraft:tnt") && !id.equals("minecraft:tnt_minecart"));
+        String igniteNote = unsupportedIgnite
+                ? " Az Auto ignite csak TNT/TNT minecart esetén használható; a többi elem gyújtás nélkül fut tovább."
+                : "";
+        return Result.success(commands.size() + " egyszeri parancs elindult" + origin + "." + ongoing + igniteNote);
     }
 
     public boolean isBusy() { return !commandQueue.isEmpty() || !continuousBlocks.isEmpty(); }
@@ -145,16 +154,37 @@ public final class OperatorAutomation {
     private String continuousCommand(Minecraft client, WorkflowBlock block) {
         String value = WorkflowBlock.normalizeBlockId(block.value());
         if (!WorkflowBlock.isValidBlockId(value)) return null;
+        String spawn = dynamicSpawnCommand(value, blockWorkflow.autoIgnite.get());
         return switch (block.type()) {
             case BLOCK_UNDER_ALL -> {
                 String selector = "@a";
                 String own = client.getUser().getName();
                 if (blockWorkflow.excludeSelf.get() && isValidPlayerName(own)) selector = "@a[name=!" + own + "]";
-                yield "execute as " + selector + " at @s run setblock ~ ~-1 ~ " + value + " replace";
+                yield "execute as " + selector + " at @s positioned ~ ~-0.98 ~ run " + spawn;
             }
-            case BLOCK_UNDER_PLAYER -> "execute at " + block.target() + " run setblock ~ ~-1 ~ " + value + " replace";
+            case BLOCK_UNDER_PLAYER -> "execute at " + block.target() + " positioned ~ ~-0.98 ~ run " + spawn;
             default -> null;
         };
+    }
+
+    private static String dynamicSpawnCommand(String configuredValue, boolean autoIgnite) {
+        String id = WorkflowBlock.baseId(configuredValue);
+        if (autoIgnite && id.equals("minecraft:tnt")) {
+            return "summon minecraft:tnt ~ ~ ~ {fuse:40s}";
+        }
+        if (autoIgnite && id.equals("minecraft:tnt_minecart")) {
+            return "summon minecraft:tnt_minecart ~ ~ ~ {fuse:40}";
+        }
+
+        boolean block = BuiltInRegistries.BLOCK.keySet().stream()
+                .anyMatch(key -> key.toString().equals(id));
+        if (block) {
+            return "summon minecraft:falling_block ~ ~ ~ {BlockState:{Name:\"" + id
+                    + "\"},Time:500,NoGravity:1b,DropItem:0b,CancelDrop:1b}";
+        }
+
+        return "summon minecraft:item ~ ~ ~ {Item:{id:\"" + id
+                + "\",count:1},Age:5900s,PickupDelay:32767s}";
     }
 
     private String firstMissingPermission(Minecraft client, List<WorkflowBlock> blocks, boolean includeDangerous) {
@@ -190,6 +220,11 @@ public final class OperatorAutomation {
     }
 
     private static boolean isConnected(Minecraft client) { return client.getConnection() != null && client.player != null; }
+    public boolean allowGameMessage(Component message) {
+        if (continuousBlocks.isEmpty()) return true;
+        return !(message.getContents() instanceof TranslatableContents translated
+                && translated.getKey().equals("commands.summon.success"));
+    }
     private static boolean canUseCommand(Minecraft client, String command) {
         return client.getConnection() != null && client.getConnection().getCommands().getRoot().getChild(command) != null;
     }

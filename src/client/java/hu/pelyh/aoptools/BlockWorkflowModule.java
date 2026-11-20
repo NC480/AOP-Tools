@@ -53,6 +53,13 @@ public final class BlockWorkflowModule extends Module {
             .visible(() -> false)
             .build());
 
+    public final Setting<Boolean> autoIgnite = storage.add(new meteordevelopment.meteorclient.settings.BoolSetting.Builder()
+            .name("automatikus-gyujtas")
+            .description("A TNT-t és a TNT minecartot aktiválva idézi meg a dinamikus láb-alá blokkokban.")
+            .defaultValue(true)
+            .visible(() -> false)
+            .build());
+
     public final Setting<Integer> commandDelayTicks = storage.add(new IntSetting.Builder()
             .name("parancs-varakozas")
             .description("Ennyi tick legyen két parancs között.")

@@ -5,6 +5,7 @@ import meteordevelopment.meteorclient.systems.modules.Category;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public final class AopToolsAddon extends MeteorAddon {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> automation.onJoin());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> automation.onDisconnect());
         ClientTickEvents.END_CLIENT_TICK.register(automation::tick);
+        ClientReceiveMessageEvents.ALLOW_GAME.register((message, overlay) -> automation.allowGameMessage(message));
 
         LOGGER.info("AOP Tools Meteor addon initialized.");
     }

@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.8.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.9.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.8.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
+A játékba telepíthető JAR a build/libs/aop-tools-1.9.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.8.0 |
+| AOP Tools | 1.9.0 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -76,7 +76,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.8.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.8.0/aop-tools-huncut-optimized-1.8.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött modletöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.9.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.9.0/aop-tools-huncut-optimized-1.9.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött modletöltéseket írja le.
 
 ### Prism Launcher fejlesztői példány
 
@@ -107,10 +107,16 @@ Bal kattintással azonnal megnyílik a Scratch-szerű editor. Jobb kattintás ut
 - OP XY – a névmezőben megadott játékos OP-olása.
 - deOP XY – a névmezőben megadott játékos deOP-olása.
 - KILL XY – a névmezőben megadott játékos megölése.
-- BLOKK ALL LÁBA ALÁ – folyamatosan a játékosok alá helyezi a megadott blokkot.
-- BLOKK XY LÁBA ALÁ – folyamatosan a megadott játékos alá helyezi a blokkot.
+- BLOKK ALL LÁBA ALÁ – folyamatosan, pontosan a játékosok aktuális pozíciója alatt idézi meg a megadott blokkot vagy itemet.
+- BLOKK XY LÁBA ALÁ – ugyanez egy megadott játékosra.
 
-A bal oldali kereső szűri a blokkpalettát. Az XY mezőben a játékosnév, a blokkmezőben például `tnt`, `minecraft:tnt` vagy más érvényes blokkazonosító adható meg. A paletta szélesebb, a blokkok kisebbek, így egyszerre több látható. A program fentről lefelé fut; a blokkok áthúzással átrendezhetők, jobb kattintással törölhetők, az egérgörgővel pedig mindkét oszlop mozgatható.
+A bal oldali kereső szűri a blokkpalettát. Az XY mezőben a játékosnév adható meg. A blokk/item mező gépelés közben a Minecraft kliens blokk- és itemregiszteréből listázza a beírt szöveggel kezdődő találatokat; például a `Gr` keresés a `grass...` azonosítókat ajánlja fel. A programblokkok szélessége a felirathoz igazodik, a hosszabb feliratok legfeljebb két sorba törnek. A program fentről lefelé fut; a blokkok áthúzással átrendezhetők, jobb kattintással törölhetők, az egérgörgővel pedig mindkét oszlop mozgatható.
+
+### Dinamikus láb-alá spawn és Auto ignite
+
+A láb-alá blokkok nem `setblock` rácspozíciókat használnak. Rövid életű blokk- vagy itementitást idéznek meg a játékos pontos, folyamatosan frissülő pozíciója alatt, ezért mozgás közben sűrű nyomot követnek. A csúszka minimuma 0,05 másodperc, vagyis szerverenként legfeljebb tickenként ismételhető a művelet.
+
+Az **Auto ignite** kapcsoló bekapcsolva a `minecraft:tnt` értéket primed TNT-ként, a `minecraft:tnt_minecart` értéket aktivált TNT minecartként idézi meg. Más blokk vagy item gyújtása nem állítja le a programot: gyújtás nélkül fut tovább, és erről futtatásonként legfeljebb egy tájékoztatás jelenik meg. A folyamatos summon parancsok sikerüzeneteit az addon elrejti, ezért nem árasztják el a chatet.
 
 ### Preset-konténerek
 
@@ -122,6 +128,7 @@ Az editorban beállítható:
 
 - az ALL blokkok kihagyják-e a saját fiókot;
 - a parancsok, illetve a folyamatos láb-alá blokkok ismétlési ideje 0,05–10,0 másodperces csúszkával.
+- az **Auto ignite** TNT/TNT minecart automatikus aktiválását.
 
 A **Futtatás / leállítás** gomb elindítja a programot. Ha KILL, KICK vagy BAN blokk is van benne, másodszor is rá kell kattintani. A láb-alá blokkok addig ismétlődnek, amíg ugyanazzal a binddel, a gombbal vagy az `/aop cancel` paranccsal le nem állítod őket.
 
@@ -136,5 +143,5 @@ A **Futtatás / leállítás** gomb elindítja a programot. Ha KILL, KICK vagy B
 
 - A mod nem kerül meg szerverjogosultságot. A műveletek csak akkor működnek, ha a szerver valóban engedélyezi őket a belépett fióknak.
 - Az ALL blokkok a kliens játékoslistájából dolgoznak; a szerver által elrejtett játékosokat a kliens nem feltétlenül ismeri.
-- A láb-alá funkció valódi blokkokat módosít a szerveren az `execute` és `setblock` parancsokkal. A TNT blokk elhelyezése önmagában nem gyújtja meg a TNT-t.
+- A dinamikus láb-alá funkció `execute` és `summon` szerverparancsokat használ. Nagyon alacsony ismétlési idő és sok játékos jelentős entitás- vagy robbanásterhelést okozhat a szerveren.
 - A KILL, KICK és BAN blokkok valódi szerverparancsokat küldenek. Teszt előtt hagyd bekapcsolva a **Saját fiók: KIHAGY** beállítást.

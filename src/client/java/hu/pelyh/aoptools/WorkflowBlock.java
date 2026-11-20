@@ -81,6 +81,12 @@ public record WorkflowBlock(Type type, String target, String value) {
         return (id.contains(":") ? id : "minecraft:" + id) + suffix;
     }
 
+    public static String baseId(String value) {
+        String normalized = normalizeBlockId(value);
+        int state = normalized.indexOf('[');
+        return state >= 0 ? normalized.substring(0, state) : normalized;
+    }
+
     private static String clean(String value) {
         return value == null ? "" : value.trim().replace("|", "").replace("\n", "").replace("\r", "");
     }
