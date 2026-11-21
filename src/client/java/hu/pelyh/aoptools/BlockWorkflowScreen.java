@@ -213,7 +213,10 @@ public final class BlockWorkflowScreen extends Screen {
     private String uniqueName(String base, int ignoredIndex) {
         String candidate = base;
         int suffix = 2;
-        while (nameExists(candidate, ignoredIndex)) candidate = WorkflowPreset.cleanName(base + " " + suffix++);
+        while (nameExists(candidate, ignoredIndex)) {
+            String ending = " " + suffix++;
+            candidate = base.substring(0, Math.min(base.length(), 24 - ending.length())) + ending;
+        }
         return candidate;
     }
 
@@ -287,7 +290,7 @@ public final class BlockWorkflowScreen extends Screen {
         for (int index = paletteScroll; index < types.size() && paletteY < bodyBottom; index++) {
             WorkflowBlock block = preview(types.get(index));
             drawBlock(graphics, paletteX + 8, paletteY, paletteWidth - 16, block, false);
-            paletteY += blockHeight(block, paletteWidth - 16) + BLOCK_GAP;
+            paletteY += blockHeight(block, paletteWidth - 16, false) + BLOCK_GAP;
         }
         graphics.disableScissor();
 

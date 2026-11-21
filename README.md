@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.11.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.12.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.11.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
+A játékba telepíthető JAR a build/libs/aop-tools-1.12.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.11.0 |
+| AOP Tools | 1.12.0 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -73,10 +73,19 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | spark | 1.10.170 |
 | Cloth Config | 21.11.153 |
 | ExploitPreventer | 1.2.0 |
+| Boosted Brightness resource pack | 1.2 |
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.11.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.11.0/aop-tools-huncut-optimized-1.11.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött modletöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.12.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.12.0/aop-tools-huncut-optimized-1.12.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
+
+### Fullbright resource-pack támogatás
+
+Az optimalizált csomag tartalmazza a **Boosted Brightness 1.2** resource packet. Ez Minecraft 1.21.11-en a lightmap core shaderrel működik, támogatja a Sodiumot, és nem igényel OptiFine-t vagy további modot. A pack a fényerőcsúszka hatását tízszeresére növeli; csak kliensoldali megjelenítést változtat, a szerver tényleges fényszintjét és a mobok spawnolását nem.
+
+Bekapcsolás: **Options → Resource Packs → Boosted Brightness v1.2 → Enable**, majd a fényerőcsúszkával állítható az erőssége. A Prism-csomag és a helyi `huncut` példány telepíti a ZIP-et, de az `options.txt` védelme érdekében nem kapcsolja be automatikusan. Shader pack használata felülírhatja a hatást.
+
+A [Boosted Brightness](https://modrinth.com/resourcepack/boosted-brightness-rp) készítője **Bluebird**. A csomag az eredeti ZIP-et tölti le a [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) licenc alapján.
 
 ### Prism Launcher fejlesztői példány
 

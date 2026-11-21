@@ -131,6 +131,8 @@ tasks.register('deployToHuncut', Copy) {
 		def previousJars = huncutModsDir.listFiles({ File dir, String name ->
 			name.startsWith('aop-tools-') && name.endsWith('.jar')
 		} as FilenameFilter)
-		previousJars?.each { it.delete() }
+		previousJars?.each { previous ->
+                if (!previous.delete()) throw new GradleException("Close Minecraft before replacing " + previous.name)
+            }
 	}
 }

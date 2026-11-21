@@ -2,6 +2,13 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.12.0
+
+- A Prism-csomagból bekapcsolható a Boosted Brightness 1.2.
+- A 24 karakteres presetnevek ütközésekor a szerkesztő helyet hagy a sorszámnak. A paletta a kattintáshoz és a rajzoláshoz azonos sormagasságot használ.
+- A stresszteszt időkorlátjába a csatlakozási idő is beleszámít.
+- A telepítő hibát jelez, ha egy zárolt régi modverzió megakadályozza a frissítést.
+
 ## 1.4.1 – 2026-11-19
 
 - Minden blokkparancshoz ALL és XY változat.

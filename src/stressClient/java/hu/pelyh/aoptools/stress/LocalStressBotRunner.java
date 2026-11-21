@@ -42,7 +42,9 @@ public final class LocalStressBotRunner {
             validate(address, port, count, delaySeconds, durationMinutes, prefix, whitelist);
 
             CountDownLatch stop = new CountDownLatch(1);
-            List<ClientSession> sessions = new ArrayList<>();
+            List<ClientSession> sessions = java.util.Collections.synchronizedList(new ArrayList<>());
+            java.util.concurrent.CompletableFuture.delayedExecutor(durationMinutes, TimeUnit.MINUTES)
+                    .execute(stop::countDown);
             startControlReader(stop);
             Runtime.getRuntime().addShutdownHook(new Thread(() -> disconnectAll(sessions), "aop-stress-shutdown"));
 
@@ -56,7 +58,7 @@ public final class LocalStressBotRunner {
                 if (index < count) stop.await(delaySeconds, TimeUnit.SECONDS);
             }
 
-            stop.await(durationMinutes, TimeUnit.MINUTES);
+            stop.await();
             disconnectAll(sessions);
             TimeUnit.MILLISECONDS.sleep(500);
             System.out.println("A helyi stresszteszt befejeződött.");
