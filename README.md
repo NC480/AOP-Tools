@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.12.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.13.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.12.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
+A játékba telepíthető JAR a build/libs/aop-tools-1.13.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.12.0 |
+| AOP Tools | 1.13.0 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -77,7 +77,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.12.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.12.0/aop-tools-huncut-optimized-1.12.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.13.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.13.0/aop-tools-huncut-optimized-1.13.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
 
 ### Fullbright resource-pack támogatás
 
@@ -126,6 +126,8 @@ Biztonsági korlátok:
 Használat előtt kapcsold be a **Saját szerver megerősítése** beállítást, add meg a helyi Paper szerver IP-címét és portját, majd állítsd be a botszámot, az időközt, a futási időt és a névelőtagot. Az offline botnevekhez a tesztszervernek `online-mode=false` beállítást kell használnia, és a `max-players` értéknek elegendőnek kell lennie. Ezt kizárólag elkülönített, saját tesztszerveren használd; Aternoshoz vagy más publikus szolgáltatáshoz a címkorlátozás miatt nem használható.
 
 ### Parancs Blokkok
+
+Az 1.13-as editorban a blokk húzásakor türkiz vonal mutatja a beszúrás helyét. Az Esc megszakítja az áthelyezést. A blokk- és itemmező találatai között görgővel vagy a fel/le nyíllal lehet lépkedni, az Enter a kijelölt azonosítót választja ki. A Futtatás gomb aktív programnál Leállításra vált. A teljes preset törléséhez vagy ürítéséhez külön megerősítés szükséges.
 
 Bal kattintással azonnal megnyílik a Scratch-szerű editor. Jobb kattintás után a **BLOKKEDITOR MEGNYITÁSA** gombbal is elérhető. A bal oldali színes blokkokat a jobb oldali programterületre lehet húzni:
 

@@ -2,6 +2,11 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.13.0
+
+- A blokkeditor kis ablakban is elérhető eszköztárat, méretezhető paneleket és beszúrásjelzőt kapott. Átméretezéskor megőrzi a beírt keresést, játékosnevet és blokkazonosítót.
+- A whitelist szerkesztő külön törlésgombot ad minden látható sorhoz, és hozzáadáskor az új címhez görget.
+
 ## 1.12.0
 
 - A Prism-csomagból bekapcsolható a Boosted Brightness 1.2.
