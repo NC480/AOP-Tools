@@ -9,10 +9,13 @@ import static net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.lit
 
 public final class AopCommands {
     private final BlockWorkflowModule blockWorkflow;
+    private final LocalStressTestModule localStressTest;
     private final OperatorAutomation automation;
 
-    public AopCommands(BlockWorkflowModule blockWorkflow, OperatorAutomation automation) {
+    public AopCommands(BlockWorkflowModule blockWorkflow, LocalStressTestModule localStressTest,
+                       OperatorAutomation automation) {
         this.blockWorkflow = blockWorkflow;
+        this.localStressTest = localStressTest;
         this.automation = automation;
     }
 
@@ -24,6 +27,10 @@ public final class AopCommands {
                         .then(literal("status").executes(context -> status(context.getSource())))
                         .then(literal("editor").executes(context -> openEditor(context.getSource())))
                         .then(literal("cancel").executes(context -> cancel(context.getSource())))
+                        .then(literal("bots")
+                                .executes(context -> startBots(context.getSource()))
+                                .then(literal("stop").executes(context -> stopBots(context.getSource())))
+                                .then(literal("status").executes(context -> botStatus(context.getSource()))))
         ));
     }
 
@@ -38,6 +45,8 @@ public final class AopCommands {
         reply(source, "/aop status – a menüpontok állapota", ChatFormatting.GRAY);
         reply(source, "/aop editor – a húzható Parancs Blokkok editor megnyitása", ChatFormatting.GRAY);
         reply(source, "/aop cancel – várakozó és folyamatos futtatás leállítása", ChatFormatting.GRAY);
+        reply(source, "/aop bots – helyi tesztbotok indítása", ChatFormatting.GRAY);
+        reply(source, "/aop bots stop – helyi tesztbotok leállítása", ChatFormatting.GRAY);
         return 1;
     }
 
@@ -47,6 +56,7 @@ public final class AopCommands {
                 + blockWorkflow.activePreset.get() + " | " + blockWorkflow.blocks().size()
                 + " blokk | autorun: " + onOff(blockWorkflow.autoRun.get()), ChatFormatting.GRAY);
         reply(source, "Futó parancssor: " + onOff(automation.isBusy()), ChatFormatting.GRAY);
+        reply(source, "Helyi tesztbotok: " + onOff(localStressTest.botsRunning()), ChatFormatting.GRAY);
         return 1;
     }
 
@@ -60,6 +70,24 @@ public final class AopCommands {
     private int openEditor(FabricClientCommandSource source) {
         blockWorkflow.openEditor();
         reply(source, "A Parancs Blokkok editor megnyitva.", ChatFormatting.GREEN);
+        return 1;
+    }
+
+    private int startBots(FabricClientCommandSource source) {
+        LocalStressBotController.Result result = localStressTest.startNow();
+        reply(source, result.message(), result.success() ? ChatFormatting.GREEN : ChatFormatting.RED);
+        return result.success() ? 1 : 0;
+    }
+
+    private int stopBots(FabricClientCommandSource source) {
+        boolean stopped = localStressTest.stopNow();
+        reply(source, stopped ? "A helyi tesztbotok leállítása elindult." : "Nem fut helyi botfolyamat.",
+                stopped ? ChatFormatting.GREEN : ChatFormatting.YELLOW);
+        return stopped ? 1 : 0;
+    }
+
+    private int botStatus(FabricClientCommandSource source) {
+        reply(source, "Helyi tesztbotok: " + onOff(localStressTest.botsRunning()), ChatFormatting.AQUA);
         return 1;
     }
 

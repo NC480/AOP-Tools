@@ -2,6 +2,12 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.14.3 – 2026-11-23
+
+- A botmodul Meteor-panelje külön, közvetlen `BOTOK INDÍTÁSA` és `BOTOK LEÁLLÍTÁSA` gombokat kapott.
+- Új `/aop bots`, `/aop bots stop` és `/aop bots status` parancsok kerülik meg a csempe-toggle hibás vagy félreérthető kezelését.
+- Az aktiválás és a háttérfolyamat indítása bekerült a Minecraft naplóba, ezért a GUI-, beállítás- és kapcsolati hiba egyértelműen elkülöníthető.
+
 ## 1.14.2 – 2026-11-23
 
 - A külön Bot szerver-whitelist csempe és a redundáns saját-szerver megerősítő kapcsoló megszűnt; a botmodul aktiválása közvetlenül elindítja a háttérklienst.

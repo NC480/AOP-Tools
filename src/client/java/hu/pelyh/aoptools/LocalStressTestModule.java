@@ -5,6 +5,10 @@ import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.settings.StringListSetting;
 import meteordevelopment.meteorclient.settings.StringSetting;
+import meteordevelopment.meteorclient.gui.GuiTheme;
+import meteordevelopment.meteorclient.gui.widgets.WWidget;
+import meteordevelopment.meteorclient.gui.widgets.containers.WTable;
+import meteordevelopment.meteorclient.gui.widgets.pressable.WButton;
 import meteordevelopment.meteorclient.systems.modules.Module;
 
 import java.util.ArrayList;
@@ -15,13 +19,11 @@ public final class LocalStressTestModule extends Module {
     private final SettingGroup identities = settings.createGroup("Botnevek");
     private final SettingGroup timing = settings.createGroup("Időzítés és újrapróbálás");
     private final LocalStressBotController controller = new LocalStressBotController((exitCode, detail) -> {
-        if (isActive()) {
-            if (exitCode == 0) info("A helyi stresszteszt befejeződött.");
-            else error(detail.isBlank()
-                    ? "A botok nem tudtak belépni. Részletek: config/aop-tools/stress-test.log"
-                    : detail);
-            disable();
-        }
+        if (exitCode == 0) info("A helyi stresszteszt befejeződött.");
+        else error(detail.isBlank()
+                ? "A botok nem tudtak belépni. Részletek: config/aop-tools/stress-test.log"
+                : detail);
+        if (isActive()) disable();
     });
 
     private final Setting<String> host = server.add(new StringSetting.Builder()
@@ -107,21 +109,52 @@ public final class LocalStressTestModule extends Module {
 
     @Override
     public void onActivate() {
+        AopToolsAddon.LOGGER.info("A Helyi stresszteszt botok modul aktiválása meghívódott.");
+        LocalStressBotController.Result result = startNow();
+        if (!result.success()) disable();
+    }
+
+    LocalStressBotController.Result startNow() {
         LocalStressBotController.Result result = controller.start(mc,
                 host.get(), port.get(), botCount.get(), connectionDelaySeconds.get(),
                 durationMinutes.get(), namePrefix.get(), customNames.get(),
                 connectionTimeoutSeconds.get(), retryCount.get(), retryDelaySeconds.get());
         if (!result.success()) {
             error(result.message());
-            disable();
-            return;
+            AopToolsAddon.LOGGER.warn("A botindítás elutasítva: {}", result.message());
+            return result;
         }
         info(result.message());
+        AopToolsAddon.LOGGER.info("A botsegéd folyamat elindult: {}", result.message());
+        return result;
     }
 
     @Override
     public void onDeactivate() {
-        if (controller.stop()) info("A helyi stresszteszt botjainak leállítása elindult.");
+        stopNow();
+    }
+
+    boolean stopNow() {
+        boolean stopped = controller.stop();
+        if (stopped) info("A helyi stresszteszt botjainak leállítása elindult.");
+        return stopped;
+    }
+
+    boolean botsRunning() {
+        return controller.isRunning();
+    }
+
+    @Override
+    public WWidget getWidget(GuiTheme theme) {
+        WTable table = theme.table();
+        table.add(theme.label("A csempe bal kattintással is indít. Kézi vezérlés:", false)).expandX();
+        table.row();
+        WButton start = table.add(theme.button("BOTOK INDÍTÁSA")).expandX().widget();
+        start.action = this::startNow;
+        table.row();
+        WButton stop = table.add(theme.button("BOTOK LEÁLLÍTÁSA")).expandX().widget();
+        stop.action = this::stopNow;
+        return table;
     }
 
     @Override

@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.14.2.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.14.3.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.14.2.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
+A játékba telepíthető JAR a build/libs/aop-tools-1.14.3.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.14.2 |
+| AOP Tools | 1.14.3 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -77,7 +77,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.14.2.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.14.2/aop-tools-huncut-optimized-1.14.2.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.14.3.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.14.3/aop-tools-huncut-optimized-1.14.3.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
 
 ### Fullbright resource-pack támogatás
 
@@ -106,7 +106,7 @@ Egy kattintásra OP-olja a kliens játékoslistáján látható összes játéko
 
 A **Helyi stresszteszt botok** modul valódi Minecraft 1.21.11 klienskapcsolatokat hoz létre egy külön, háttérben futó Java-folyamatból. A botok megjelennek a játékoslistán és valódi férőhelyet foglalnak, de nem mozognak, nem írnak a chatbe és nem futtatnak parancsokat. A segédkliens a mod JAR része; első indításkor a `config/aop-tools` mappába kerül, ahol a `stress-test.log` napló is megtalálható.
 
-A **Helyi stresszteszt botok** az egyetlen szükséges Meteor-csempe. A beállításainál adható meg a helyi cím, port, botszám, az egyedi nevek, a belépési időköz, a timeout és a korlátozott újrapróbálás. A csempe aktiválása közvetlenül elindítja a háttérklienst; nincs külön whitelist vagy megerősítő kapcsoló. A mod a kiválasztott helyi végpontot automatikusan átadja a segédkliensnek, amely kizárólag ezt az egy címet fogadja el.
+A **Helyi stresszteszt botok** az egyetlen szükséges Meteor-csempe. A beállításainál adható meg a helyi cím, port, botszám, az egyedi nevek, a belépési időköz, a timeout és a korlátozott újrapróbálás. A csempe bal kattintása közvetlenül indít; a beállításpanel alján külön **BOTOK INDÍTÁSA** és **BOTOK LEÁLLÍTÁSA** gomb is található. Ugyanez elérhető az `/aop bots` és `/aop bots stop` parancsokkal. Nincs külön whitelist vagy megerősítő kapcsoló. A mod a kiválasztott helyi végpontot automatikusan átadja a segédkliensnek, amely kizárólag ezt az egy címet fogadja el.
 
 Biztonsági korlátok:
 
@@ -171,6 +171,9 @@ A **Futtatás / leállítás** gomb elindítja a programot. Ha KILL, KICK vagy B
 - /aop editor – a Parancs Blokkok editor megnyitása.
 - /aop status – az aktuális állapot megjelenítése.
 - /aop cancel – a várakozó és folyamatos futtatás leállítása.
+- /aop bots – a beállított helyi tesztbotok közvetlen indítása.
+- /aop bots stop – a helyi tesztbotok leállítása.
+- /aop bots status – a botfolyamat állapota.
 
 ## Fontos
 

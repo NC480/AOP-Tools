@@ -26,7 +26,7 @@ public final class AopToolsAddon extends MeteorAddon {
         OperatorAutomation automation = new OperatorAutomation(opEveryone, blockWorkflow);
         opEveryone.bind(automation);
         blockWorkflow.bind(automation);
-        new AopCommands(blockWorkflow, automation).register();
+        new AopCommands(blockWorkflow, localStressTest, automation).register();
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> automation.onJoin());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> automation.onDisconnect());
