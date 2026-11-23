@@ -1,11 +1,11 @@
 {
   "formatVersion": 1,
   "game": "minecraft",
-  "versionId": "1.14.0",
+  "versionId": "1.14.1",
   "name": "AOP Tools - Huncut Optimized",
   "summary": "Fabric 1.21.11 + Meteor, AOP Tools, bounded local stress clients, performance stack and Sodium fullbright pack.",
   "files": [
-    {"path":"mods/aop-tools-1.14.0.jar","hashes":{"sha1":"de01d5d4ad504d1373a4bef924e4a659da5b8cc0","sha512":"5fd7fdb5cdfaf37c164455f490a47722c0a947759de1eb4035fb43452337c0e75ef94ed1fa21d8c5825d9ab06d7db8ac519c1fce7b48bcfa9f4f6dc716cc50c4"},"env":{"client":"required","server":"unsupported"},"downloads":["https://github.com/NC480/AOP-Tools/releases/download/v1.14.0/aop-tools-1.14.0.jar"],"fileSize":21096728},
+    {"path":"mods/aop-tools-1.14.1.jar","hashes":{"sha1":"080972b6a4cbdb2162a70fd741c8235293e02b18","sha512":"11e668de2f8a6351acb39e19fd53f813543fdb8734c9be258f568e9287da7637aa501fbf37b54085d8cdb77b4f9452f5b8d9eeb492300eee88944eca18eeaadd"},"env":{"client":"required","server":"unsupported"},"downloads":["https://github.com/NC480/AOP-Tools/releases/download/v1.14.1/aop-tools-1.14.1.jar"],"fileSize":21096912},
     {"path":"resourcepacks/Boosted Brightness v1.2.zip","hashes":{"sha1":"60a20c4dfa82efdc175cc96e5f53d5f63e4566e0","sha512":"373f459368f283142ea88c07db447ee66ece1834c63bdd88b1a8ff511f8f45c118fd8f277b9c454349f5ff3a4ed8eab1e059a64e77f9128c0e2cf32296587c96"},"env":{"client":"required","server":"unsupported"},"downloads":["https://cdn.modrinth.com/data/hykOznvB/versions/mVPzPvIm/Boosted%20Brightness%20v1.2.zip"],"fileSize":5659},
     {"path":"mods/cloth-config-21.11.153-fabric.jar","hashes":{"sha1":"4c224606a963bce223db5b27edb4959ecf40d4ee","sha512":"8f455489d4b71069e998568cf4e1450116f4360a4eb481cd89117f629c6883164886cf63ca08ac4fc929dd13d1112152755a6216d4a1498ee6406ef102093e51"},"env":{"client":"required","server":"unsupported"},"downloads":["https://cdn.modrinth.com/data/9s6osm5g/versions/xuX40TN5/cloth-config-21.11.153-fabric.jar"],"fileSize":1148427},
     {"path":"mods/Clumps-fabric-1.21.11-29.0.0.1.jar","hashes":{"sha1":"626fde9e970030cfc8cb64cd0a1abfc03d37ecc2","sha512":"3cff3cd2d600a6d84030b38ce6244143d13774d5287627bb7312adae5edc7ae2d9151a2c9c39a00681c354d549b0a62ac48c0077ba586cc10c00d32f39e87f18"},"env":{"client":"required","server":"unsupported"},"downloads":["https://cdn.modrinth.com/data/Wnxd13zP/versions/OgBE8Rz4/Clumps-fabric-1.21.11-29.0.0.1.jar"],"fileSize":20355},

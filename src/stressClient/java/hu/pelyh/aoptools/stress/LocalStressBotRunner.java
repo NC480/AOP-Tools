@@ -11,6 +11,7 @@ import org.geysermc.mcprotocollib.network.event.session.SessionAdapter;
 import org.geysermc.mcprotocollib.network.factory.ClientNetworkSessionFactory;
 import org.geysermc.mcprotocollib.protocol.MinecraftConstants;
 import org.geysermc.mcprotocollib.protocol.MinecraftProtocol;
+import org.geysermc.mcprotocollib.protocol.data.ProtocolState;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -85,20 +86,21 @@ public final class LocalStressBotRunner {
                                          int timeoutSeconds, int retryCount, int retryDelaySeconds)
             throws InterruptedException {
         for (int attempt = 1; attempt <= retryCount + 1 && stop.getCount() > 0; attempt++) {
-            CountDownLatch result = new CountDownLatch(1);
-            AtomicBoolean connected = new AtomicBoolean();
-            ClientSession session = createSession(address, port, username, sessionService, result, connected,
+            AtomicBoolean disconnected = new AtomicBoolean();
+            ClientSession session = createSession(address, port, username, sessionService, disconnected,
                     timeoutSeconds);
             System.out.println("Csatlakozás indítása: " + username + " (" + attempt + "/" + (retryCount + 1) + ")");
             session.connect();
-            result.await(timeoutSeconds, TimeUnit.SECONDS);
-
-            if (connected.get() && session.isConnected()) {
-                stop.await(750, TimeUnit.MILLISECONDS);
-                if (session.isConnected()) {
-                    System.out.println(username + " sikeresen belépett.");
-                    return session;
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds);
+            while (stop.getCount() > 0 && System.nanoTime() < deadline && !disconnected.get()) {
+                if (inGame(session)) {
+                    stop.await(250, TimeUnit.MILLISECONDS);
+                    if (inGame(session)) {
+                        System.out.println(username + " sikeresen belépett.");
+                        return session;
+                    }
                 }
+                stop.await(50, TimeUnit.MILLISECONDS);
             }
             if (session.isConnected()) session.disconnect(Component.text("AOP kapcsolati próba lejárt"));
             if (attempt <= retryCount && stop.getCount() > 0) {
@@ -111,8 +113,8 @@ public final class LocalStressBotRunner {
     }
 
     private static ClientSession createSession(InetAddress address, int port, String username,
-                                               SessionService sessionService, CountDownLatch result,
-                                               AtomicBoolean connected, int timeoutSeconds) {
+                                               SessionService sessionService, AtomicBoolean disconnected,
+                                               int timeoutSeconds) {
         MinecraftProtocol protocol = new MinecraftProtocol(username);
         ClientSession client = ClientNetworkSessionFactory.factory()
                 .setRemoteSocketAddress(new InetSocketAddress(address, port))
@@ -125,18 +127,18 @@ public final class LocalStressBotRunner {
         client.setFlag(BuiltinFlags.CLIENT_CONNECT_TIMEOUT, timeoutSeconds);
         client.addListener(new SessionAdapter() {
             @Override
-            public void connected(org.geysermc.mcprotocollib.network.event.session.ConnectedEvent event) {
-                connected.set(true);
-                result.countDown();
-            }
-
-            @Override
             public void disconnected(DisconnectedEvent event) {
+                disconnected.set(true);
                 System.out.println(username + " lecsatlakozott: " + event.getReason());
-                result.countDown();
             }
         });
         return client;
+    }
+
+    private static boolean inGame(ClientSession session) {
+        return session.isConnected()
+                && session.getPacketProtocol().getInboundState() == ProtocolState.GAME
+                && session.getPacketProtocol().getOutboundState() == ProtocolState.GAME;
     }
 
     private static void disconnectAll(List<ClientSession> sessions) {

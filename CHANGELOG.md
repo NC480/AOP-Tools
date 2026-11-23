@@ -2,6 +2,10 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.14.1 – 2026-11-23
+
+- A bot csak a teljes Minecraft-belépés és a `GAME` protokollállapot elérése után számít sikeresnek; a puszta TCP/proxykapcsolat már nem ad téves sikerjelzést.
+
 ## 1.14.0 – 2026-11-23
 
 - A helyi stresszteszt botjai egyedi, ellenőrzött neveket, 1–60 másodperces belépési időközt, kapcsolati timeoutot és korlátozott újrapróbálást kaptak.
