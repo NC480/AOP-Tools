@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.14.1.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.14.2.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.14.1.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
+A játékba telepíthető JAR a build/libs/aop-tools-1.14.2.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.14.1 |
+| AOP Tools | 1.14.2 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -77,7 +77,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.14.1.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.14.1/aop-tools-huncut-optimized-1.14.1.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.14.2.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.14.2/aop-tools-huncut-optimized-1.14.2.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
 
 ### Fullbright resource-pack támogatás
 
@@ -106,12 +106,7 @@ Egy kattintásra OP-olja a kliens játékoslistáján látható összes játéko
 
 A **Helyi stresszteszt botok** modul valódi Minecraft 1.21.11 klienskapcsolatokat hoz létre egy külön, háttérben futó Java-folyamatból. A botok megjelennek a játékoslistán és valódi férőhelyet foglalnak, de nem mozognak, nem írnak a chatbe és nem futtatnak parancsokat. A segédkliens a mod JAR része; első indításkor a `config/aop-tools` mappába kerül, ahol a `stress-test.log` napló is megtalálható.
 
-A szerverengedélyezés két külön Meteor-csempére van bontva:
-
-- **Bot szerver-whitelist** – külön szerkesztőben adhatók hozzá és törölhetők az engedélyezett helyi `IP:port` célok. Alapértelmezés: `127.0.0.1:25565`.
-- **Helyi stresszteszt botok** – a botszámot, az egyedi neveket, a belépési időközt, a timeoutot és a korlátozott újrapróbálást kezeli, de csak akkor indul el, ha a megadott cél pontosan szerepel a whitelisten.
-
-A whitelistet a Meteor a többi modulbeállítással együtt menti. A mod induláskor kanonikus IP-címre alakítja a bejegyzéseket, és az ellenőrzött listát a külön botfolyamatnak is átadja, ezért a cél mindkét rétegben ellenőrzésre kerül.
+A **Helyi stresszteszt botok** az egyetlen szükséges Meteor-csempe. A beállításainál adható meg a helyi cím, port, botszám, az egyedi nevek, a belépési időköz, a timeout és a korlátozott újrapróbálás. A csempe aktiválása közvetlenül elindítja a háttérklienst; nincs külön whitelist vagy megerősítő kapcsoló. A mod a kiválasztott helyi végpontot automatikusan átadja a segédkliensnek, amely kizárólag ezt az egy címet fogadja el.
 
 Biztonsági korlátok:
 
@@ -122,10 +117,10 @@ Biztonsági korlátok:
 - sikertelen belépés után botonként 0–3 újrapróbálás kérhető, 1–30 másodperces várakozással;
 - a futási idő legfeljebb 10 perc, utána a botok automatikusan lecsatlakoznak;
 - a modul kikapcsolása azonnali szabályos leállítást kér a háttérfolyamattól;
-- a korlátokat a Meteor modul és a külön segédkliens is ellenőrzi.
-- csak a **Bot szerver-whitelist** listán szereplő pontos `IP:port` cél engedélyezett.
+- a korlátokat a Meteor modul és a külön segédkliens is ellenőrzi;
+- a segédkliens csak a modul által ellenőrzött pontos `IP:port` célhoz csatlakozhat.
 
-Használat előtt kapcsold be a **Saját szerver megerősítése** beállítást, add meg a helyi Paper szerver IP-címét és portját, majd állítsd be a botszámot, az időközt és a futási időt. Az **Egyedi botnevek** listában legfeljebb tíz, 1–16 karakteres Minecraft-név adható meg; ha rövidebb a lista a botszámnál, a hiányzó neveket a névelőtag és automatikus sorszám tölti ki. Hibás vagy duplikált névvel a modul nem indul el. Ha egy bot sem tud belépni, a segédkliens hibával leáll, a részletes okot pedig a `config/aop-tools/stress-test.log` tartalmazza.
+Add meg a helyi Paper szerver IP-címét és portját, majd állítsd be a botszámot, az időközt és a futási időt. Az **Egyedi botnevek** listában legfeljebb tíz, 1–16 karakteres Minecraft-név adható meg; ha rövidebb a lista a botszámnál, a hiányzó neveket a névelőtag és automatikus sorszám tölti ki. Hibás vagy duplikált névvel a modul nem indul el. Ha egy bot sem tud belépni, a segédkliens hibával leáll, a konkrét okot a Meteor chat és a `config/aop-tools/stress-test.log` is megjeleníti.
 
 Az offline botnevekhez a tesztszervernek `online-mode=false` beállítást kell használnia, és a `max-players` értéknek elegendőnek kell lennie. Ezt kizárólag elkülönített, saját tesztszerveren használd; Aternoshoz vagy más publikus szolgáltatáshoz a címkorlátozás miatt nem használható.
 

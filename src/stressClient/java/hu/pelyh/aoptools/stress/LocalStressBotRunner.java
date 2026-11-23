@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,11 +37,11 @@ public final class LocalStressBotRunner {
             int delaySeconds = Integer.parseInt(args[3]);
             int durationMinutes = Integer.parseInt(args[4]);
             List<String> names = decodeLines(args[5]);
-            Set<String> whitelist = Set.copyOf(decodeLines(args[6]));
+            String authorizedEndpoint = decodeText(args[6]);
             int connectionTimeoutSeconds = Integer.parseInt(args[7]);
             int retryCount = Integer.parseInt(args[8]);
             int retryDelaySeconds = Integer.parseInt(args[9]);
-            validate(address, port, count, delaySeconds, durationMinutes, names, whitelist,
+            validate(address, port, count, delaySeconds, durationMinutes, names, authorizedEndpoint,
                     connectionTimeoutSeconds, retryCount, retryDelaySeconds);
 
             CountDownLatch stop = new CountDownLatch(1);
@@ -166,13 +165,17 @@ public final class LocalStressBotRunner {
     }
 
     private static List<String> decodeLines(String encoded) {
-        String decoded = new String(Base64.getUrlDecoder().decode(encoded), StandardCharsets.UTF_8);
+        String decoded = decodeText(encoded);
         if (decoded.isEmpty()) return List.of();
         return List.of(decoded.split("\\R"));
     }
 
+    private static String decodeText(String encoded) {
+        return new String(Base64.getUrlDecoder().decode(encoded), StandardCharsets.UTF_8);
+    }
+
     private static void validate(InetAddress address, int port, int count, int delaySeconds,
-                                 int durationMinutes, List<String> names, Set<String> whitelist,
+                                 int durationMinutes, List<String> names, String authorizedEndpoint,
                                  int connectionTimeoutSeconds, int retryCount, int retryDelaySeconds) {
         if (port < 1 || port > 65535) fail("Érvénytelen port.");
         if (count < 1 || count > 10) fail("Legfeljebb 10 bot engedélyezett.");
@@ -183,7 +186,8 @@ public final class LocalStressBotRunner {
         if (connectionTimeoutSeconds < 3 || connectionTimeoutSeconds > 30) fail("A timeout 3-30 másodperc lehet.");
         if (retryCount < 0 || retryCount > 3) fail("Az újrapróbálások száma 0-3 lehet.");
         if (retryDelaySeconds < 1 || retryDelaySeconds > 30) fail("Az újrapróbálási várakozás 1-30 másodperc lehet.");
-        if (!StressServerPolicy.permits(address, port, whitelist)) fail("A cél nincs a bot szerver-whitelistjén.");
+        if (!StressServerPolicy.authorizes(address, port, authorizedEndpoint))
+            fail("A háttérfolyamat célcíme nem egyezik az ellenőrzött helyi végponttal.");
     }
 
     private static void fail(String message) {

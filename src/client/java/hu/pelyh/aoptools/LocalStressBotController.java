@@ -17,22 +17,22 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntConsumer;
+import java.util.function.BiConsumer;
 
 final class LocalStressBotController {
-    private final IntConsumer onExit;
+    private final BiConsumer<Integer, String> onExit;
     private Process process;
     private BufferedWriter control;
+    private Path logFile;
 
-    LocalStressBotController(IntConsumer onExit) {
+    LocalStressBotController(BiConsumer<Integer, String> onExit) {
         this.onExit = onExit;
     }
 
     synchronized Result start(Minecraft client, String requestedHost, int port, int count,
                               int delaySeconds, int durationMinutes, String prefix,
                               List<String> requestedNames, int connectionTimeoutSeconds,
-                              int retryCount, int retryDelaySeconds,
-                              List<String> whitelistEntries) {
+                              int retryCount, int retryDelaySeconds) {
         if (isRunning()) return Result.error("A helyi stresszteszt már fut.");
         if (port < 1 || port > 65535) return Result.error("Érvénytelen szerverport.");
         if (count < 1 || count > 10) return Result.error("A botszám csak 1 és 10 között lehet.");
@@ -60,11 +60,7 @@ final class LocalStressBotController {
         } catch (IOException | IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
         }
-        List<String> canonicalWhitelist = StressServerPolicy.canonicalEntries(whitelistEntries);
         String endpoint = StressServerPolicy.endpoint(address, port);
-        if (!StressServerPolicy.permits(address, port, canonicalWhitelist)) {
-            return Result.error("A cél nincs a Bot szerver-whitelist listán: " + endpoint);
-        }
 
         try {
             Path directory = client.gameDirectory.toPath().resolve("config").resolve("aop-tools");
@@ -75,6 +71,7 @@ final class LocalStressBotController {
 
             List<String> command = new ArrayList<>();
             command.add(java.toString());
+            command.add("-Dfile.encoding=UTF-8");
             command.add("-Xms64m");
             command.add("-Xmx256m");
             command.add("-jar");
@@ -87,7 +84,7 @@ final class LocalStressBotController {
             command.add(Base64.getUrlEncoder().withoutPadding().encodeToString(
                     String.join("\n", botNames).getBytes(StandardCharsets.UTF_8)));
             command.add(Base64.getUrlEncoder().withoutPadding().encodeToString(
-                    String.join("\n", canonicalWhitelist).getBytes(StandardCharsets.UTF_8)));
+                    endpoint.getBytes(StandardCharsets.UTF_8)));
             command.add(Integer.toString(connectionTimeoutSeconds));
             command.add(Integer.toString(retryCount));
             command.add(Integer.toString(retryDelaySeconds));
@@ -98,6 +95,7 @@ final class LocalStressBotController {
                     .redirectOutput(log.toFile())
                     .start();
             process = started;
+            logFile = log;
             control = new BufferedWriter(new OutputStreamWriter(started.getOutputStream(), StandardCharsets.UTF_8));
             started.onExit().thenRun(() -> client.execute(() -> finished(started)));
             return Result.success(count + " helyi tesztbot indítása elkezdődött. Napló: " + log);
@@ -138,9 +136,23 @@ final class LocalStressBotController {
 
     private synchronized void finished(Process watched) {
         if (process != watched) return;
-        AopToolsAddon.LOGGER.info("A helyi stresszteszt kliens kilépett ({}).", watched.exitValue());
+        int exitCode = watched.exitValue();
+        String detail = exitCode == 0 ? "" : lastLogMessage();
+        AopToolsAddon.LOGGER.info("A helyi stresszteszt kliens kilépett ({}).", exitCode);
         clear();
-        onExit.accept(watched.exitValue());
+        onExit.accept(exitCode, detail);
+    }
+
+    private String lastLogMessage() {
+        if (logFile == null || !Files.isRegularFile(logFile)) return "";
+        try {
+            List<String> lines = Files.readAllLines(logFile, StandardCharsets.UTF_8);
+            for (int index = lines.size() - 1; index >= 0; index--) {
+                String line = lines.get(index).trim();
+                if (!line.isEmpty()) return line.length() <= 180 ? line : line.substring(0, 177) + "...";
+            }
+        } catch (IOException ignored) { }
+        return "";
     }
 
     private Path extractRunner(Path directory) throws IOException {
@@ -175,6 +187,7 @@ final class LocalStressBotController {
         }
         control = null;
         process = null;
+        logFile = null;
     }
 
     record Result(boolean success, String message) {

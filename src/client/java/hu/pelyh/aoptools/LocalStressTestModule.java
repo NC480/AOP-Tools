@@ -1,6 +1,5 @@
 package hu.pelyh.aoptools;
 
-import meteordevelopment.meteorclient.settings.BoolSetting;
 import meteordevelopment.meteorclient.settings.IntSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
@@ -15,20 +14,15 @@ public final class LocalStressTestModule extends Module {
     private final SettingGroup server = settings.createGroup("Cél szerver");
     private final SettingGroup identities = settings.createGroup("Botnevek");
     private final SettingGroup timing = settings.createGroup("Időzítés és újrapróbálás");
-    private final StressServerWhitelistModule whitelist;
-    private final LocalStressBotController controller = new LocalStressBotController(exitCode -> {
+    private final LocalStressBotController controller = new LocalStressBotController((exitCode, detail) -> {
         if (isActive()) {
             if (exitCode == 0) info("A helyi stresszteszt befejeződött.");
-            else error("A botok nem tudtak belépni. Részletek: config/aop-tools/stress-test.log");
+            else error(detail.isBlank()
+                    ? "A botok nem tudtak belépni. Részletek: config/aop-tools/stress-test.log"
+                    : detail);
             disable();
         }
     });
-
-    private final Setting<Boolean> ownServer = server.add(new BoolSetting.Builder()
-            .name("sajat-szerver-megerositese")
-            .description("Csak akkor kapcsold be, ha a cél a saját helyi vagy LAN szervered.")
-            .defaultValue(false)
-            .build());
 
     private final Setting<String> host = server.add(new StringSetting.Builder()
             .name("helyi-szerver-cime")
@@ -105,26 +99,18 @@ public final class LocalStressTestModule extends Module {
             .visible(() -> retryCount.get() > 0)
             .build());
 
-    public LocalStressTestModule(StressServerWhitelistModule whitelist) {
+    public LocalStressTestModule() {
         super(AopToolsAddon.CATEGORY, "helyi-stresszteszt-botok",
                 "Korlátozott offline tesztklienseket csatlakoztat kizárólag saját localhost/LAN Paper szerverhez.");
-        this.whitelist = whitelist;
         runInMainMenu = true;
     }
 
     @Override
     public void onActivate() {
-        if (!ownServer.get()) {
-            error("Előbb kapcsold be a Saját szerver megerősítése beállítást.");
-            disable();
-            return;
-        }
-
         LocalStressBotController.Result result = controller.start(mc,
                 host.get(), port.get(), botCount.get(), connectionDelaySeconds.get(),
                 durationMinutes.get(), namePrefix.get(), customNames.get(),
-                connectionTimeoutSeconds.get(), retryCount.get(), retryDelaySeconds.get(),
-                whitelist.entries());
+                connectionTimeoutSeconds.get(), retryCount.get(), retryDelaySeconds.get());
         if (!result.success()) {
             error(result.message());
             disable();

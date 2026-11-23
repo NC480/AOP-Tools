@@ -2,6 +2,12 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.14.2 – 2026-11-23
+
+- A külön Bot szerver-whitelist csempe és a redundáns saját-szerver megerősítő kapcsoló megszűnt; a botmodul aktiválása közvetlenül elindítja a háttérklienst.
+- A localhost/privát LAN korlátozás megmaradt, a segédkliens pedig automatikusan csak a modulban megadott egyetlen ellenőrzött végpontot fogadja el.
+- Sikertelen belépéskor a Meteor már a háttérnapló utolsó konkrét hibaüzenetét is megjeleníti.
+
 ## 1.14.1 – 2026-11-23
 
 - A bot csak a teljes Minecraft-belépés és a `GAME` protokollállapot elérése után számít sikeresnek; a puszta TCP/proxykapcsolat már nem ad téves sikerjelzést.
