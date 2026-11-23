@@ -1,9 +1,9 @@
-AOP Tools - Huncut Optimized 1.13.0
+AOP Tools - Huncut Optimized 1.14.0
 
 Prism Launcher importalas:
 1. Add Instance
 2. Import
-3. Valaszd ki az aop-tools-huncut-optimized-1.13.0.mrpack fajlt.
+3. Valaszd ki az aop-tools-huncut-optimized-1.14.0.mrpack fajlt.
 
 Fullbright bekapcsolasa:
 Options -> Resource Packs -> Boosted Brightness v1.2 -> Enable

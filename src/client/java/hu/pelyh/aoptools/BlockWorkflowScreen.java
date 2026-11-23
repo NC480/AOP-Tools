@@ -34,6 +34,7 @@ public final class BlockWorkflowScreen extends Screen {
     private EditBox searchBox;
     private EditBox targetBox;
     private EditBox blockBox;
+    private EditBox reasonBox;
     private Button selfButton;
     private Button igniteButton;
     private DelaySlider delaySlider;
@@ -41,6 +42,9 @@ public final class BlockWorkflowScreen extends Screen {
     private Button activeButton;
     private Button autoRunButton;
     private WorkflowBlock dragging;
+    private int grabX, grabY;
+    private String filterQuery;
+    private List<WorkflowBlock.Type> paletteMatches = List.of();
     private int dragOriginalIndex = -1;
     private int paletteScroll;
     private int sequenceScroll;
@@ -67,9 +71,6 @@ public final class BlockWorkflowScreen extends Screen {
     @Override
     protected void init() {
         layout = new EditorLayout(width, height);
-        String search = searchBox == null ? "" : searchBox.getValue();
-        String target = targetBox == null ? "" : targetBox.getValue();
-        String item = blockBox == null ? "" : blockBox.getValue();
         int presetY = 22;
         int nav = layout.navWidth();
         int nameX = 16 + nav;
@@ -78,10 +79,12 @@ public final class BlockWorkflowScreen extends Screen {
         int deleteX = addX + layout.addWidth() + 4;
         addRenderableWidget(Button.builder(Component.literal("<"), button -> selectPreset(currentPresetIndex - 1))
                 .bounds(12, presetY, nav, 18).build());
-        presetNameBox = addRenderableWidget(new EditBox(font, nameX, presetY, layout.presetNameWidth(), 18, Component.literal("Preset neve")));
-        presetNameBox.setMaxLength(24);
-        presetNameBox.setValue(presets.get(currentPresetIndex).name());
-        presetNameBox.setResponder(value -> renameCurrentPreset(value));
+        if (presetNameBox == null) {
+            presetNameBox = new EditBox(font, nameX, presetY, layout.presetNameWidth(), 18, Component.literal("Preset neve"));
+            presetNameBox.setMaxLength(24);
+            presetNameBox.setValue(presets.get(currentPresetIndex).name());
+        }
+        placeField(presetNameBox, nameX, presetY, layout.presetNameWidth());
         addRenderableWidget(Button.builder(Component.literal(">"), button -> selectPreset(currentPresetIndex + 1))
                 .bounds(nextX, presetY, nav, 18).build());
         addRenderableWidget(Button.builder(Component.literal("+ Új"), button -> newPreset())
@@ -112,24 +115,37 @@ public final class BlockWorkflowScreen extends Screen {
         int paletteX = 12;
         int paletteWidth = paletteWidth();
         int fieldWidth = paletteWidth - 16;
-        searchBox = addRenderableWidget(new EditBox(font, paletteX + 8, bodyTop() + 18, fieldWidth, 18, Component.literal("Keresés")));
-        searchBox.setMaxLength(40);
-        searchBox.setHint(Component.literal("Keresés"));
-        searchBox.setResponder(value -> paletteScroll = 0);
-        searchBox.setValue(search);
+        if (searchBox == null) {
+            searchBox = new EditBox(font, 0, 0, fieldWidth, 18, Component.literal("Keresés"));
+            searchBox.setMaxLength(40);
+            searchBox.setHint(Component.literal("Keresés"));
+            searchBox.setResponder(value -> paletteScroll = 0);
+        }
+        placeField(searchBox, paletteX + 8, bodyTop() + 18, fieldWidth);
 
         int halfWidth = (fieldWidth - 4) / 2;
-        targetBox = addRenderableWidget(new EditBox(font, paletteX + 8, bodyTop() + 39, halfWidth, 18, Component.literal("XY játékos")));
-        targetBox.setMaxLength(16);
-        targetBox.setFilter(value -> value.isEmpty() || OperatorAutomation.isValidPlayerName(value));
-        targetBox.setHint(Component.literal("XY név"));
-        targetBox.setValue(target);
+        if (targetBox == null) {
+            targetBox = new EditBox(font, 0, 0, halfWidth, 18, Component.literal("XY játékos"));
+            targetBox.setMaxLength(16);
+            targetBox.setFilter(value -> value.isEmpty() || OperatorAutomation.isValidPlayerName(value));
+            targetBox.setHint(Component.literal("XY név"));
+        }
+        placeField(targetBox, paletteX + 8, bodyTop() + 39, halfWidth);
 
-        blockBox = addRenderableWidget(new EditBox(font, paletteX + 12 + halfWidth, bodyTop() + 39, fieldWidth - halfWidth - 4, 18, Component.literal("Blokk")));
-        blockBox.setMaxLength(80);
-        blockBox.setHint(Component.literal("Blokk"));
-        blockBox.setResponder(this::updateValueSuggestions);
-        blockBox.setValue(item);
+        if (blockBox == null) {
+            blockBox = new EditBox(font, 0, 0, fieldWidth - halfWidth - 4, 18, Component.literal("Blokk"));
+            blockBox.setMaxLength(80);
+            blockBox.setHint(Component.literal("Blokk"));
+            blockBox.setResponder(this::updateValueSuggestions);
+        }
+        placeField(blockBox, paletteX + 12 + halfWidth, bodyTop() + 39, fieldWidth - halfWidth - 4);
+
+        if (reasonBox == null) {
+            reasonBox = new EditBox(font, 0, 0, fieldWidth, 18, Component.literal("KICK/BAN indok"));
+            reasonBox.setMaxLength(120);
+            reasonBox.setHint(Component.literal("Indok (KICK/BAN)"));
+        }
+        placeField(reasonBox, paletteX + 8, bodyTop() + 60, fieldWidth);
 
         int bottomY = height - 24;
         int buttonWidth = Math.max(92, Math.min(145, (width - 32) / 3));
@@ -142,10 +158,32 @@ public final class BlockWorkflowScreen extends Screen {
         refreshButtons();
     }
 
+    private void placeField(EditBox box, int x, int y, int fieldWidth) {
+        box.setX(x);
+        box.setY(y);
+        box.setWidth(fieldWidth);
+        box.setCursorPosition(box.getCursorPosition());
+        addRenderableWidget(box);
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        var focus = getFocused();
+        cancelDrag();
+        super.resize(width, height);
+        if (focus instanceof EditBox field && children().contains(field)) setFocused(field);
+    }
+
+    private void cancelDrag() {
+        dragging = null;
+        dragOriginalIndex = -1;
+        setDragging(false);
+    }
+
     private int paletteWidth() { return layout.paletteWidth(); }
     private int bodyTop() { return layout.bodyTop(); }
     private int bodyBottom() { return layout.bodyBottom(); }
-    private int paletteViewportTop() { return bodyTop() + 61; }
+    private int paletteViewportTop() { return bodyTop() + 82; }
     private int workspaceX() { return layout.workspaceX(); }
 
     private void refreshButtons() {
@@ -167,14 +205,14 @@ public final class BlockWorkflowScreen extends Screen {
             refreshButtons();
             return;
         }
-        save();
-        module.activePreset.set(presets.get(currentPresetIndex).name());
-        if (module.containsDangerousBlock() && !runArmed) {
+        if (!runArmed && blocks.stream().anyMatch(block -> block.type().dangerous)) {
             runArmed = true;
             notice("KILL/KICK/BAN van a programban. Kattints még egyszer!", ChatFormatting.RED);
             refreshButtons();
             return;
         }
+        save();
+        module.activePreset.set(presets.get(currentPresetIndex).name());
         OperatorAutomation.Result result = automation.runWorkflow(minecraft, true);
         runArmed = false;
         notice(result.message(), result.success() ? ChatFormatting.GREEN : ChatFormatting.RED);
@@ -183,10 +221,13 @@ public final class BlockWorkflowScreen extends Screen {
 
     private List<WorkflowBlock.Type> filteredTypes() {
         String query = searchBox == null ? "" : searchBox.getValue().trim().toLowerCase(Locale.ROOT);
-        return Arrays.stream(WorkflowBlock.Type.values())
+        if (query.equals(filterQuery)) return paletteMatches;
+        filterQuery = query;
+        paletteMatches = Arrays.stream(WorkflowBlock.Type.values())
                 .filter(type -> query.isEmpty() || type.label.toLowerCase(Locale.ROOT).contains(query)
                         || type.name().toLowerCase(Locale.ROOT).contains(query))
                 .toList();
+        return paletteMatches;
     }
 
     private void updateValueSuggestions(String typed) {
@@ -231,20 +272,12 @@ public final class BlockWorkflowScreen extends Screen {
         module.savePresets(presets);
     }
 
-    private void renameCurrentPreset(String requested) {
-        if (requested == null || requested.isBlank()) return;
-        String oldName = presets.get(currentPresetIndex).name();
-        String newName = uniqueName(WorkflowPreset.cleanName(requested), currentPresetIndex);
-        presets.set(currentPresetIndex, new WorkflowPreset(newName, blocks));
-        if (oldName.equalsIgnoreCase(module.activePreset.get())) module.activePreset.set(newName);
-    }
-
     private String uniqueName(String base, int ignoredIndex) {
         String candidate = base;
         int suffix = 2;
         while (nameExists(candidate, ignoredIndex)) {
             String ending = " " + suffix++;
-            candidate = base.substring(0, Math.min(base.length(), 24 - ending.length())) + ending;
+            candidate = WorkflowPreset.prefix(base, 24 - ending.length()) + ending;
         }
         return candidate;
     }
@@ -272,7 +305,7 @@ public final class BlockWorkflowScreen extends Screen {
         currentPresetIndex = presets.size() - 1;
         blocks = new ArrayList<>();
         presetNameBox.setValue(name);
-        sequenceScroll = 0; save(); refreshButtons();
+        sequenceScroll = 0; runArmed = false; save(); refreshButtons();
         notice("Új üres preset-konténer létrehozva.", ChatFormatting.GREEN);
     }
 
@@ -285,7 +318,7 @@ public final class BlockWorkflowScreen extends Screen {
         blocks = new ArrayList<>(presets.get(currentPresetIndex).blocks());
         presetNameBox.setValue(presets.get(currentPresetIndex).name());
         if (removed.equalsIgnoreCase(module.activePreset.get())) module.activePreset.set(presets.get(currentPresetIndex).name());
-        sequenceScroll = 0; save(); refreshButtons();
+        sequenceScroll = 0; runArmed = false; save(); refreshButtons();
         notice("Preset törölve: " + removed, ChatFormatting.YELLOW);
     }
 
@@ -295,6 +328,7 @@ public final class BlockWorkflowScreen extends Screen {
             notice("Legalább egy presetnek maradnia kell.", ChatFormatting.YELLOW);
             return;
         }
+        storeCurrentPreset();
         String name = presets.get(currentPresetIndex).name();
         Component question = Component.literal(onlyBlocks ? "Törlöd a preset blokkjait?" : "Törlöd ezt a presetet?");
         minecraft.setScreen(new net.minecraft.client.gui.screens.ConfirmScreen(confirmed -> {
@@ -316,7 +350,13 @@ public final class BlockWorkflowScreen extends Screen {
         noticeColor = color.getColor() == null ? 0xFFFFFFFF : 0xFF000000 | color.getColor();
     }
 
-    @Override public void onClose() { save(); minecraft.setScreen(parent); }
+    @Override public void onClose() { minecraft.setScreen(parent); }
+    @Override public void removed() {
+        cancelDrag();
+        runArmed = false;
+        save();
+        super.removed();
+    }
     @Override public boolean isPauseScreen() { return false; }
 
     @Override
@@ -369,12 +409,20 @@ public final class BlockWorkflowScreen extends Screen {
         graphics.drawString(font, fitText(notice, width - 24), 12, height - 40, noticeColor);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderValueSuggestions(graphics, mouseX, mouseY);
-        if (dragging != null) drawBlock(graphics, mouseX - 85, mouseY - BLOCK_HEIGHT / 2, 170, dragging, true);
+        if (dragging != null) {
+            boolean sequence = dragOriginalIndex >= 0;
+            int maxWidth = (sequence ? workspaceWidth : paletteWidth) - 16;
+            Chip ghost = chip(dragging, maxWidth, sequence);
+            int x = Math.clamp(mouseX - grabX, 0, width - ghost.width());
+            int y = Math.clamp(mouseY - grabY, 0, height - ghost.height());
+            drawBlock(graphics, x, y, maxWidth, dragging, sequence);
+        }
     }
 
     private WorkflowBlock preview(WorkflowBlock.Type type) {
         String target = type.needsTarget ? (targetBox.getValue().isBlank() ? "XY" : targetBox.getValue()) : "";
-        String value = type.needsValue ? (blockBox.getValue().isBlank() ? "minecraft:tnt" : blockBox.getValue()) : "";
+        String value = type.needsValue ? (blockBox.getValue().isBlank() ? "minecraft:tnt" : blockBox.getValue())
+                : type.needsReason ? reasonBox.getValue() : "";
         return WorkflowBlock.of(type, target, value);
     }
 
@@ -413,10 +461,11 @@ public final class BlockWorkflowScreen extends Screen {
                 ? block.type().label.replace("XY", block.target())
                 : block.type().label;
         String first = prefix + action;
-        if (block.type().needsValue) {
-            String combined = first + ": " + block.value();
+        if (block.type().needsValue || block.type().needsReason) {
+            String detail = block.type().needsReason ? "Indok: " + block.reason() : block.value();
+            String combined = first + ": " + detail;
             if (font.width(combined) <= textWidth) return List.of(combined);
-            return List.of(fitText(first, textWidth), fitText(block.value(), textWidth));
+            return List.of(fitText(first, textWidth), fitText(detail, textWidth));
         }
         if (font.width(first) <= textWidth) return List.of(first);
 
@@ -499,9 +548,7 @@ public final class BlockWorkflowScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         if (dragging != null) {
             if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
-                dragging = null;
-                dragOriginalIndex = -1;
-                setDragging(false);
+                cancelDrag();
             }
             return true;
         }
@@ -557,33 +604,36 @@ public final class BlockWorkflowScreen extends Screen {
             if (clickedType != null) {
                 WorkflowBlock.Type type = clickedType;
                 String target = targetBox.getValue().trim();
-                String value = blockBox.getValue().trim();
+                String value = type.needsReason ? reasonBox.getValue() : blockBox.getValue().trim();
                 if (type.needsTarget && !OperatorAutomation.isValidPlayerName(target)) {
                     setFocused(targetBox); notice("Előbb adj meg érvényes XY játékosnevet.", ChatFormatting.RED); return true;
                 }
                 if (type.needsValue && !WorkflowBlock.isValidBlockId(value)) {
                     setFocused(blockBox); notice("Adj meg blokkazonosítót, például: tnt vagy minecraft:stone", ChatFormatting.RED); return true;
                 }
-                beginDrag(WorkflowBlock.of(type, target, value), -1);
+                beginDrag(WorkflowBlock.of(type, target, value), -1, (int) mx - 20, (int) my - y);
                 return true;
             }
         }
-        int index = sequenceIndexAt(mx, my);
-        if (index >= 0 && index < blocks.size()) {
+        RowHit hit = sequenceHit(mx, my);
+        if (hit != null) {
+            int index = hit.index();
             if (event.button() == 1) {
                 blocks.remove(index); save(); runArmed = false; refreshButtons();
                 notice("Blokk törölve.", ChatFormatting.YELLOW); return true;
             }
             if (event.button() == 0) {
-                beginDrag(blocks.get(index), index);
+                beginDrag(blocks.get(index), index, (int) mx - workspaceX() - 8, (int) my - hit.y());
                 return true;
             }
         }
         return false;
     }
 
-    private void beginDrag(WorkflowBlock block, int source) {
+    private void beginDrag(WorkflowBlock block, int source, int offsetX, int offsetY) {
         setFocused(null);
+        grabX = offsetX;
+        grabY = offsetY;
         dragging = block;
         dragOriginalIndex = source;
         setDragging(true);
@@ -606,9 +656,7 @@ public final class BlockWorkflowScreen extends Screen {
             refreshButtons();
             notice(moving ? "Blokk áthelyezve." : "Blokk hozzáadva.", ChatFormatting.GREEN);
         }
-        dragging = null;
-        dragOriginalIndex = -1;
-        setDragging(false);
+        cancelDrag();
         return true;
     }
 
@@ -634,17 +682,19 @@ public final class BlockWorkflowScreen extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    private int sequenceIndexAt(double mx, double my) {
+    private record RowHit(int index, int y) { }
+
+    private RowHit sequenceHit(double mx, double my) {
         int x = workspaceX() + 8;
         int y = bodyTop() + 24;
-        if (mx < x || mx >= width - 20 || my < y || my >= bodyBottom() - 1) return -1;
+        if (mx < x || mx >= width - 20 || my < y || my >= bodyBottom() - 1) return null;
         int maxWidth = width - workspaceX() - 28;
         for (int i = sequenceScroll; i < blocks.size() && y < bodyBottom() - 1; i++) {
             Chip visible = chip(blocks.get(i), maxWidth, true);
-            if (my >= y && my < y + visible.height()) return mx < x + visible.width() ? i : -1;
+            if (my >= y && my < y + visible.height()) return mx < x + visible.width() ? new RowHit(i, y) : null;
             y += visible.height() + BLOCK_GAP;
         }
-        return -1;
+        return null;
     }
 
     private record Insertion(int index, int y) { }

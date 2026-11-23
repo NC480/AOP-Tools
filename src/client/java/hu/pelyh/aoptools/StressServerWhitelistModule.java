@@ -28,7 +28,8 @@ public final class StressServerWhitelistModule extends Module {
     }
 
     void setEntries(List<String> entries) {
-        allowedServers.set(List.copyOf(entries));
+        // Meteor reloads this list in place when switching profiles.
+        allowedServers.set(new java.util.ArrayList<>(entries));
     }
 
     @Override

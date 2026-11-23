@@ -115,11 +115,13 @@ public final class BlockWorkflowModule extends Module {
     public void savePresets(List<WorkflowPreset> presets) {
         List<WorkflowPreset> safe = presets == null || presets.isEmpty()
                 ? List.of(WorkflowPreset.empty("Alap")) : List.copyOf(presets);
-        presetStorage.set(safe.stream().map(WorkflowPreset::encode).toList());
+        List<String> encoded = new ArrayList<>(safe.size());
+        for (WorkflowPreset preset : safe) encoded.add(preset.encode());
+        presetStorage.set(encoded);
         if (safe.stream().noneMatch(p -> p.name().equalsIgnoreCase(activePreset.get()))) {
             activePreset.set(safe.getFirst().name());
         }
-        workflow.set(List.of());
+        workflow.set(new ArrayList<>());
     }
 
     public int activePresetIndex(List<WorkflowPreset> presets) {

@@ -30,6 +30,14 @@ jobs:
           chmod +x gradlew
           ./gradlew clean build --no-daemon
 
+      - name: Check scaled editor layouts
+        shell: pwsh
+        run: ./tests/layout/verify.ps1
+
+      - name: Check preset and reason persistence
+        shell: pwsh
+        run: ./tests/presets/verify.ps1
+
       - name: Upload addon JAR
         uses: actions/upload-artifact@v4
         with:

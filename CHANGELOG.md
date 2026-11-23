@@ -2,6 +2,13 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.14.0 – 2026-11-23
+
+- A helyi stresszteszt botjai egyedi, ellenőrzött neveket, 1–60 másodperces belépési időközt, kapcsolati timeoutot és korlátozott újrapróbálást kaptak.
+- Ha egyetlen bot sem tud belépni, a háttérfolyamat most hibával leáll és a Meteor a naplóhoz irányít, nem várja ki üresen a teljes futási időt.
+- A KICK/BAN ALL és XY blokkok saját, presetben tárolt indokot fogadnak; a régi presetek kompatibilis alapindokot kapnak.
+- A kiadás része a teljes editor/preset/whitelist állapotkezelési audit, a biztonságos Prism-telepítés és a kibővített offline ellenőrzőkészlet.
+
 ## 1.13.0
 
 - A blokkeditor kis ablakban is elérhető eszköztárat, méretezhető paneleket és beszúrásjelzőt kapott. Átméretezéskor megőrzi a beírt keresést, játékosnevet és blokkazonosítót.

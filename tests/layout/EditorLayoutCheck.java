@@ -33,8 +33,8 @@ public final class EditorLayoutCheck {
                 "palette and workspace overlap");
         require(layout, right - layout.workspaceX() >= 80, "workspace too narrow for a block");
         require(layout, layout.bodyTop() >= 63, "toolbar overlaps editor body");
-        // Search + target controls and at least one two-line palette block.
-        require(layout, layout.bodyBottom() - layout.bodyTop() >= 61 + 2 + 28,
+        // Search + target/block + kick/ban reason controls and one two-line palette block.
+        require(layout, layout.bodyBottom() - layout.bodyTop() >= 82 + 2 + 28,
                 "palette cannot display a complete two-line block");
         require(layout, layout.bodyBottom() <= layout.height() - 41, "body overlaps footer");
     }

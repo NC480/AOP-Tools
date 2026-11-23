@@ -41,7 +41,13 @@ public record WorkflowPreset(String name, List<WorkflowBlock> blocks) {
         if (value == null) return "Preset";
         String cleaned = value.trim().replace("\n", " ").replace("\r", " ");
         if (cleaned.isEmpty()) return "Preset";
-        return cleaned.substring(0, Math.min(24, cleaned.length()));
+        return prefix(cleaned, 24);
+    }
+
+    static String prefix(String name, int maxUnits) {
+        int end = Math.min(name.length(), maxUnits);
+        if (end > 0 && Character.isHighSurrogate(name.charAt(end - 1))) end--;
+        return name.substring(0, end);
     }
 
     private static String base64(String value) {

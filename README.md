@@ -18,7 +18,7 @@ GitHub release: https://github.com/NC480/AOP-Tools/releases/latest
 
 ## Telepítés
 
-1. Töltsd le az aop-tools-1.13.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
+1. Töltsd le az aop-tools-1.14.0.jar fájlt a GitHub Releases oldalról, vagy fordítsd le forrásból.
 2. Másold a JAR-t a Minecraft mods mappájába.
 3. Ugyanott legyen a Fabric API és a Minecraft 1.21.11-hez készült Meteor Client.
 4. Indítsd el a Fabric-profilt.
@@ -32,7 +32,7 @@ Java 21 szükséges.
 .\gradlew.bat clean build
 ~~~
 
-A játékba telepíthető JAR a build/libs/aop-tools-1.13.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
+A játékba telepíthető JAR a build/libs/aop-tools-1.14.0.jar fájl lesz. A repository GitHub Actions workflow-ja minden pushnál és pull requestnél ugyanezt a buildet futtatja. A build a helyi stresszteszthez szükséges, külön folyamatban futó klienskapcsolat-kezelőt is beágyazza a mod JAR-ba.
 
 ## Optimalizált kliens és kompatibilitás
 
@@ -60,7 +60,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 | Fabric Loader | 0.20.1 |
 | Fabric API | 0.141.6+1.21.11 |
 | Meteor Client | 1.21.11 build 86 |
-| AOP Tools | 1.13.0 |
+| AOP Tools | 1.14.0 |
 | Sodium | 0.8.14 |
 | Entity Culling | 1.12.1 |
 | FerriteCore | 8.2.0 |
@@ -77,7 +77,7 @@ A FastQuit kötelező függősége, a **Cloth Config**, szintén szükséges. Op
 
 ### Importálható Prism Launcher-csomag
 
-A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.13.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.13.0/aop-tools-huncut-optimized-1.13.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
+A GitHub Release oldalról letölthető [`aop-tools-huncut-optimized-1.14.0.mrpack`](https://github.com/NC480/AOP-Tools/releases/download/v1.14.0/aop-tools-huncut-optimized-1.14.0.mrpack) közvetlenül importálható a Prism Launcher **Add Instance → Import** menüpontjával. A csomag nem tartalmaz fiókot, UUID-t, szerverlistát, világot, naplót, képernyőképet, Meteor-profilt, AOP presetet, helyi elérési utat vagy játékidőadatot. Csak a Minecraft/Fabric verziót és a hivatalos, hash-ellenőrzött mod- és resource-pack letöltéseket írja le.
 
 ### Fullbright resource-pack támogatás
 
@@ -109,7 +109,7 @@ A **Helyi stresszteszt botok** modul valódi Minecraft 1.21.11 klienskapcsolatok
 A szerverengedélyezés két külön Meteor-csempére van bontva:
 
 - **Bot szerver-whitelist** – külön szerkesztőben adhatók hozzá és törölhetők az engedélyezett helyi `IP:port` célok. Alapértelmezés: `127.0.0.1:25565`.
-- **Helyi stresszteszt botok** – a botszámot és futást kezeli, de csak akkor indul el, ha a megadott cél pontosan szerepel a whitelisten.
+- **Helyi stresszteszt botok** – a botszámot, az egyedi neveket, a belépési időközt, a timeoutot és a korlátozott újrapróbálást kezeli, de csak akkor indul el, ha a megadott cél pontosan szerepel a whitelisten.
 
 A whitelistet a Meteor a többi modulbeállítással együtt menti. A mod induláskor kanonikus IP-címre alakítja a bejegyzéseket, és az ellenőrzött listát a külön botfolyamatnak is átadja, ezért a cél mindkét rétegben ellenőrzésre kerül.
 
@@ -118,25 +118,29 @@ Biztonsági korlátok:
 - kizárólag `localhost`, loopback vagy közvetlen privát LAN IP-cím használható; publikus cím és hosztnév nem;
 - legfeljebb 10 bot indítható;
 - két csatlakozás között legalább 1 másodperc telik el;
+- a belépési időköz 1–60 másodperc, a kapcsolati timeout 3–30 másodperc között állítható;
+- sikertelen belépés után botonként 0–3 újrapróbálás kérhető, 1–30 másodperces várakozással;
 - a futási idő legfeljebb 10 perc, utána a botok automatikusan lecsatlakoznak;
 - a modul kikapcsolása azonnali szabályos leállítást kér a háttérfolyamattól;
 - a korlátokat a Meteor modul és a külön segédkliens is ellenőrzi.
 - csak a **Bot szerver-whitelist** listán szereplő pontos `IP:port` cél engedélyezett.
 
-Használat előtt kapcsold be a **Saját szerver megerősítése** beállítást, add meg a helyi Paper szerver IP-címét és portját, majd állítsd be a botszámot, az időközt, a futási időt és a névelőtagot. Az offline botnevekhez a tesztszervernek `online-mode=false` beállítást kell használnia, és a `max-players` értéknek elegendőnek kell lennie. Ezt kizárólag elkülönített, saját tesztszerveren használd; Aternoshoz vagy más publikus szolgáltatáshoz a címkorlátozás miatt nem használható.
+Használat előtt kapcsold be a **Saját szerver megerősítése** beállítást, add meg a helyi Paper szerver IP-címét és portját, majd állítsd be a botszámot, az időközt és a futási időt. Az **Egyedi botnevek** listában legfeljebb tíz, 1–16 karakteres Minecraft-név adható meg; ha rövidebb a lista a botszámnál, a hiányzó neveket a névelőtag és automatikus sorszám tölti ki. Hibás vagy duplikált névvel a modul nem indul el. Ha egy bot sem tud belépni, a segédkliens hibával leáll, a részletes okot pedig a `config/aop-tools/stress-test.log` tartalmazza.
+
+Az offline botnevekhez a tesztszervernek `online-mode=false` beállítást kell használnia, és a `max-players` értéknek elegendőnek kell lennie. Ezt kizárólag elkülönített, saját tesztszerveren használd; Aternoshoz vagy más publikus szolgáltatáshoz a címkorlátozás miatt nem használható.
 
 ### Parancs Blokkok
 
-Az 1.13-as editorban a blokk húzásakor türkiz vonal mutatja a beszúrás helyét. Az Esc megszakítja az áthelyezést. A blokk- és itemmező találatai között görgővel vagy a fel/le nyíllal lehet lépkedni, az Enter a kijelölt azonosítót választja ki. A Futtatás gomb aktív programnál Leállításra vált. A teljes preset törléséhez vagy ürítéséhez külön megerősítés szükséges.
+Az editorban a blokk húzásakor türkiz vonal mutatja a beszúrás helyét. Az Esc megszakítja az áthelyezést. A blokk- és itemmező találatai között görgővel vagy a fel/le nyíllal lehet lépkedni, az Enter a kijelölt azonosítót választja ki. A Futtatás gomb aktív programnál Leállításra vált. A teljes preset törléséhez vagy ürítéséhez külön megerősítés szükséges.
 
 Bal kattintással azonnal megnyílik a Scratch-szerű editor. Jobb kattintás után a **BLOKKEDITOR MEGNYITÁSA** gombbal is elérhető. A bal oldali színes blokkokat a jobb oldali programterületre lehet húzni:
 
 - OP ALL – minden látható online játékos OP-olása.
 - deOP ALL – minden látható online játékos deOP-olása.
-- KICK ALL – minden látható online játékos kirúgása.
-- KICK XY – a névmezőben megadott játékos kirúgása.
-- BAN ALL – minden látható online játékos tiltása.
-- BAN XY – a névmezőben megadott játékos tiltása.
+- KICK ALL – minden látható online játékos kirúgása a megadott indokkal.
+- KICK XY – a névmezőben megadott játékos kirúgása a megadott indokkal.
+- BAN ALL – minden látható online játékos tiltása a megadott indokkal.
+- BAN XY – a névmezőben megadott játékos tiltása a megadott indokkal.
 - KILL ALL – minden látható online játékos megölése.
 - OP XY – a névmezőben megadott játékos OP-olása.
 - deOP XY – a névmezőben megadott játékos deOP-olása.
@@ -144,7 +148,7 @@ Bal kattintással azonnal megnyílik a Scratch-szerű editor. Jobb kattintás ut
 - BLOKK ALL LÁBA ALÁ – folyamatosan, pontosan a játékosok aktuális pozíciója alatt idézi meg a megadott blokkot vagy itemet.
 - BLOKK XY LÁBA ALÁ – ugyanez egy megadott játékosra.
 
-A bal oldali kereső szűri a blokkpalettát. Az XY mezőben a játékosnév adható meg. A blokk/item mező gépelés közben a Minecraft kliens blokk- és itemregiszteréből listázza a beírt szöveggel kezdődő találatokat; például a `Gr` keresés a `grass...` azonosítókat ajánlja fel. A programblokkok szélessége a felirathoz igazodik, a hosszabb feliratok legfeljebb két sorba törnek. A program fentről lefelé fut; a blokkok áthúzással átrendezhetők, jobb kattintással törölhetők, az egérgörgővel pedig mindkét oszlop mozgatható.
+A bal oldali kereső szűri a blokkpalettát. Az XY mezőben a játékosnév adható meg. Az **Indok (KICK/BAN)** mező tartalma külön-külön mentődik minden behúzott KICK/BAN blokkba; üres mezőnél az `AOP blokkprogram` alapérték marad. A blokk/item mező gépelés közben a Minecraft kliens blokk- és itemregiszteréből listázza a beírt szöveggel kezdődő találatokat; például a `Gr` keresés a `grass...` azonosítókat ajánlja fel. A programblokkok szélessége a felirathoz igazodik, a hosszabb feliratok legfeljebb két sorba törnek. A program fentről lefelé fut; a blokkok áthúzással átrendezhetők, jobb kattintással törölhetők, az egérgörgővel pedig mindkét oszlop mozgatható.
 
 ### Dinamikus láb-alá spawn és Auto ignite
 

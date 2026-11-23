@@ -1,3 +1,9 @@
+import groovy.json.JsonSlurper
+import java.nio.file.Files
+import java.nio.file.LinkOption
+import java.nio.file.StandardCopyOption
+import java.util.zip.ZipFile
+
 plugins {
 	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 	id 'maven-publish'
@@ -30,8 +36,10 @@ repositories {
 }
 
 sourceSets {
+	main.java.srcDir 'src/shared/java'
 	stressClient {
 		java.srcDir 'src/stressClient/java'
+		java.srcDir 'src/shared/java'
 	}
 }
 
@@ -92,6 +100,18 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = 'UTF-8'
 }
 
+def checkStressServerPolicy = tasks.register('checkStressServerPolicy', JavaExec) {
+	group = 'verification'
+	description = 'Checks local endpoint restrictions without opening network connections.'
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'hu.pelyh.aoptools.StressServerPolicyCheck'
+}
+tasks.named('check') { dependsOn checkStressServerPolicy }
+tasks.named('test', Test) {
+	// Verification sources are executable checks rather than JUnit tests.
+	failOnNoDiscoveredTests = false
+}
+
 java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_21
@@ -114,25 +134,73 @@ publishing {
 	}
 }
 
-def appDataDir = System.getenv('APPDATA')
-def huncutModsDir = appDataDir != null
-		? new File((String) appDataDir, 'PrismLauncher/instances/huncut/.minecraft/mods')
-		: layout.buildDirectory.dir('unused-huncut-mods').get().asFile
+tasks.register('prismPack', Zip) {
+	group = 'distribution'
+	description = 'Packages the public download manifest and installation notes.'
+	archiveFileName = "aop-tools-huncut-optimized-${project.version}.mrpack"
+	destinationDirectory = layout.buildDirectory.dir('distributions')
+	from('pack') {
+		include 'modrinth.index.json', 'overrides/HUNCUT-README.txt'
+	}
+}
 
-tasks.register('deployToHuncut', Copy) {
+def appDataDir = providers.environmentVariable('APPDATA').orElse('').get()
+def addonJar = tasks.named('remapJar').flatMap { it.archiveFile }
+tasks.register('deployToHuncut') {
 	group = 'distribution'
 	description = 'Builds and installs the addon into the Prism Launcher huncut instance.'
-	dependsOn tasks.named('remapJar')
-	from tasks.named('remapJar').flatMap { it.archiveFile }
-	into huncutModsDir
-
-	doFirst {
-		huncutModsDir.mkdirs()
-		def previousJars = huncutModsDir.listFiles({ File dir, String name ->
-			name.startsWith('aop-tools-') && name.endsWith('.jar')
-		} as FilenameFilter)
-		previousJars?.each { previous ->
-                if (!previous.delete()) throw new GradleException("Close Minecraft before replacing " + previous.name)
-            }
+	inputs.file(addonJar)
+	doLast {
+		def instance = new File(appDataDir, 'PrismLauncher/instances/huncut')
+		if (!appDataDir || !new File(instance, 'instance.cfg').isFile()) {
+			throw new GradleException('Prism instance huncut was not found.')
+		}
+		def mods = Files.createDirectories(instance.toPath().resolve('.minecraft/mods'))
+		def source = addonJar.get().asFile.toPath()
+		def target = mods.resolve(source.fileName)
+		def old = []
+		Files.newDirectoryStream(mods, 'aop-tools-*.jar').withCloseable { files ->
+			for (def path : files) {
+				if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) continue
+				try {
+					new ZipFile(path.toFile()).withCloseable { zip ->
+						def metadata = zip.getEntry('fabric.mod.json')
+						if (metadata && zip.getInputStream(metadata).withCloseable { new JsonSlurper().parse(it).id == 'aoptools' }) {
+							old.add(path)
+						}
+					}
+				} catch (java.util.zip.ZipException ignored) {
+					// Leave unrelated or unreadable archives untouched.
+				}
+			}
+		}
+		if (Files.exists(target, LinkOption.NOFOLLOW_LINKS) && !old.contains(target)) {
+			throw new GradleException("A different file already occupies ${target}.")
+		}
+		if (old.size() == 1 && old[0] == target && Files.mismatch(source, target) == -1L) return
+		def staging = Files.createTempDirectory(mods, '.aop-update-')
+		def staged = staging.resolve('incoming.tmp')
+		def backups = [:]
+		try {
+			Files.copy(source, staged)
+			for (def path : old) {
+				def backup = staging.resolve(path.fileName.toString() + '.bak')
+				Files.move(path, backup)
+				backups[path] = backup
+			}
+			Files.move(staged, target, StandardCopyOption.ATOMIC_MOVE)
+		} catch (IOException failure) {
+			backups.each { original, backup ->
+				try { Files.move(backup, original) }
+				catch (IOException rollbackFailure) { failure.addSuppressed(rollbackFailure) }
+			}
+			throw new GradleException("Could not install AOP Tools. Close Minecraft and retry. Any unrestored backups are in ${staging}.", failure)
+		} finally {
+			Files.deleteIfExists(staged)
+			boolean empty = Files.newDirectoryStream(staging).withCloseable { !it.iterator().hasNext() }
+			if (empty) Files.deleteIfExists(staging)
+		}
+		backups.values().each { Files.deleteIfExists(it) }
+		Files.deleteIfExists(staging)
 	}
 }

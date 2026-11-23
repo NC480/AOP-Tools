@@ -13,10 +13,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 public final class OperatorAutomation {
-    private static final Pattern VALID_PLAYER_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
     private final OpEveryoneModule opEveryone;
     private final BlockWorkflowModule blockWorkflow;
     private final Queue<QueuedCommand> commandQueue = new ArrayDeque<>();
@@ -38,6 +36,7 @@ public final class OperatorAutomation {
 
     public void tick(Minecraft client) {
         if (!isConnected(client)) { cancelAll(); return; }
+        if (!blockWorkflow.autoRun.get()) autoRunCountdown = -1;
         if (autoRunCountdown > 0) {
             autoRunCountdown--;
             if (autoRunCountdown == 0) {
@@ -69,7 +68,8 @@ public final class OperatorAutomation {
         if (!commandQueue.isEmpty()) return Result.error("Már fut egy parancssor.");
         Set<String> names = onlinePlayerNames(client, false);
         if (names.isEmpty()) return Result.error("Nem található játékos a játékoslistában.");
-        names.forEach(name -> enqueue("op " + name));
+        int delay = opEveryone.commandDelayTicks.get();
+        names.forEach(name -> commandQueue.add(new QueuedCommand("op " + name, delay)));
         return Result.success(names.size() + " játékos OP-olása elindult.");
     }
 
@@ -83,10 +83,10 @@ public final class OperatorAutomation {
 
     private Result toggleWorkflow(Minecraft client, boolean allowDangerous, boolean fromBind) {
         if (!isConnected(client)) return Result.error("Nem csatlakozol szerverhez.");
+        autoRunCountdown = -1;
         if (!continuousBlocks.isEmpty()) {
-            continuousBlocks = List.of();
-            continuousCountdown = 0;
-            return Result.success("A folyamatos láb-alá blokk futtatás leállt.");
+            cancelAll();
+            return Result.success("A blokkprogram leállt.");
         }
         if (!commandQueue.isEmpty()) return Result.error("Már fut egy parancssor.");
         List<WorkflowBlock> blocks = blockWorkflow.blocks();
@@ -116,7 +116,7 @@ public final class OperatorAutomation {
     public boolean isBusy() { return !commandQueue.isEmpty() || !continuousBlocks.isEmpty(); }
 
     public int cancelQueuedCommands() {
-        int count = commandQueue.size() + continuousBlocks.size();
+        int count = commandQueue.size() + continuousBlocks.size() + (autoRunCountdown > 0 ? 1 : 0);
         cancelAll();
         return count;
     }
@@ -126,7 +126,7 @@ public final class OperatorAutomation {
     }
 
     public static boolean isValidPlayerName(String name) {
-        return name != null && VALID_PLAYER_NAME.matcher(name).matches();
+        return WorkflowBlock.isValidPlayerName(name);
     }
 
     private List<String> expandOneShot(Minecraft client, List<WorkflowBlock> blocks, boolean allowDangerous) {
@@ -138,13 +138,13 @@ public final class OperatorAutomation {
                 case OP_ALL -> online.forEach(name -> commands.add("op " + name));
                 case DEOP_ALL -> online.forEach(name -> commands.add("deop " + name));
                 case KILL_ALL -> online.forEach(name -> commands.add("kill " + name));
-                case KICK_ALL -> online.forEach(name -> commands.add("kick " + name + " AOP blokkprogram"));
-                case BAN_ALL -> online.forEach(name -> commands.add("ban " + name + " AOP blokkprogram"));
+                case KICK_ALL -> online.forEach(name -> commands.add("kick " + name + " " + block.reason()));
+                case BAN_ALL -> online.forEach(name -> commands.add("ban " + name + " " + block.reason()));
                 case OP_PLAYER -> commands.add("op " + block.target());
                 case DEOP_PLAYER -> commands.add("deop " + block.target());
                 case KILL_PLAYER -> commands.add("kill " + block.target());
-                case KICK_PLAYER -> commands.add("kick " + block.target() + " AOP blokkprogram");
-                case BAN_PLAYER -> commands.add("ban " + block.target() + " AOP blokkprogram");
+                case KICK_PLAYER -> commands.add("kick " + block.target() + " " + block.reason());
+                case BAN_PLAYER -> commands.add("ban " + block.target() + " " + block.reason());
                 case BLOCK_UNDER_ALL, BLOCK_UNDER_PLAYER -> { }
             }
         }
@@ -200,6 +200,7 @@ public final class OperatorAutomation {
                 case BLOCK_UNDER_ALL, BLOCK_UNDER_PLAYER -> "execute";
             };
             if (checked.add(command) && !canUseCommand(client, command)) return command;
+            if (block.type().continuous() && checked.add("summon") && !canUseCommand(client, "summon")) return "summon";
         }
         return null;
     }

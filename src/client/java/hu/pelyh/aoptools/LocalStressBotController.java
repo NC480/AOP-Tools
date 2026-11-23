@@ -17,40 +17,52 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
+import java.util.function.IntConsumer;
 
 final class LocalStressBotController {
-    private static final Pattern PREFIX = Pattern.compile("[A-Za-z0-9_]{1,10}");
-    private final Runnable onExit;
+    private final IntConsumer onExit;
     private Process process;
     private BufferedWriter control;
 
-    LocalStressBotController(Runnable onExit) {
+    LocalStressBotController(IntConsumer onExit) {
         this.onExit = onExit;
     }
 
     synchronized Result start(Minecraft client, String requestedHost, int port, int count,
                               int delaySeconds, int durationMinutes, String prefix,
+                              List<String> requestedNames, int connectionTimeoutSeconds,
+                              int retryCount, int retryDelaySeconds,
                               List<String> whitelistEntries) {
         if (isRunning()) return Result.error("A helyi stresszteszt már fut.");
         if (port < 1 || port > 65535) return Result.error("Érvénytelen szerverport.");
         if (count < 1 || count > 10) return Result.error("A botszám csak 1 és 10 között lehet.");
-        if (delaySeconds < 1 || delaySeconds > 10)
-            return Result.error("A csatlakozások között 1-10 másodperc lehet.");
+        if (delaySeconds < 1 || delaySeconds > 60)
+            return Result.error("A csatlakozások között 1-60 másodperc lehet.");
         if (durationMinutes < 1 || durationMinutes > 10)
             return Result.error("A futási idő 1-10 perc lehet.");
-        if (prefix == null || !PREFIX.matcher(prefix.trim()).matches())
-            return Result.error("A névelőtag 1-10 angol betűt, számot vagy aláhúzást tartalmazhat.");
+        if (connectionTimeoutSeconds < 3 || connectionTimeoutSeconds > 30)
+            return Result.error("A kapcsolati timeout 3-30 másodperc lehet.");
+        if (retryCount < 0 || retryCount > 3)
+            return Result.error("Az újrapróbálások száma 0-3 lehet.");
+        if (retryDelaySeconds < 1 || retryDelaySeconds > 30)
+            return Result.error("Az újrapróbálási várakozás 1-30 másodperc lehet.");
+
+        final List<String> botNames;
+        try {
+            botNames = StressBotNames.prepare(count, prefix, requestedNames);
+        } catch (IllegalArgumentException exception) {
+            return Result.error(exception.getMessage());
+        }
 
         final InetAddress address;
         try {
-            address = resolvePrivateAddress(requestedHost);
-        } catch (IOException exception) {
+            address = StressServerPolicy.parseLocalAddress(requestedHost);
+        } catch (IOException | IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
         }
         List<String> canonicalWhitelist = StressServerPolicy.canonicalEntries(whitelistEntries);
         String endpoint = StressServerPolicy.endpoint(address, port);
-        if (!canonicalWhitelist.contains(endpoint)) {
+        if (!StressServerPolicy.permits(address, port, canonicalWhitelist)) {
             return Result.error("A cél nincs a Bot szerver-whitelist listán: " + endpoint);
         }
 
@@ -72,9 +84,13 @@ final class LocalStressBotController {
             command.add(Integer.toString(count));
             command.add(Integer.toString(delaySeconds));
             command.add(Integer.toString(durationMinutes));
-            command.add(prefix.trim());
+            command.add(Base64.getUrlEncoder().withoutPadding().encodeToString(
+                    String.join("\n", botNames).getBytes(StandardCharsets.UTF_8)));
             command.add(Base64.getUrlEncoder().withoutPadding().encodeToString(
                     String.join("\n", canonicalWhitelist).getBytes(StandardCharsets.UTF_8)));
+            command.add(Integer.toString(connectionTimeoutSeconds));
+            command.add(Integer.toString(retryCount));
+            command.add(Integer.toString(retryDelaySeconds));
 
             Process started = new ProcessBuilder(command)
                     .directory(directory.toFile())
@@ -83,7 +99,7 @@ final class LocalStressBotController {
                     .start();
             process = started;
             control = new BufferedWriter(new OutputStreamWriter(started.getOutputStream(), StandardCharsets.UTF_8));
-            Thread.ofVirtual().name("aop-stress-client-watch").start(() -> watch(started));
+            started.onExit().thenRun(() -> client.execute(() -> finished(started)));
             return Result.success(count + " helyi tesztbot indítása elkezdődött. Napló: " + log);
         } catch (IOException exception) {
             AopToolsAddon.LOGGER.error("A helyi stresszteszt nem indítható.", exception);
@@ -120,18 +136,11 @@ final class LocalStressBotController {
         return process != null && process.isAlive();
     }
 
-    private void watch(Process watched) {
-        try {
-            int exitCode = watched.waitFor();
-            AopToolsAddon.LOGGER.info("A helyi stresszteszt kliens kilépett ({}).", exitCode);
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-        } finally {
-            synchronized (this) {
-                if (process == watched) clear();
-            }
-            onExit.run();
-        }
+    private synchronized void finished(Process watched) {
+        if (process != watched) return;
+        AopToolsAddon.LOGGER.info("A helyi stresszteszt kliens kilépett ({}).", watched.exitValue());
+        clear();
+        onExit.accept(watched.exitValue());
     }
 
     private Path extractRunner(Path directory) throws IOException {
@@ -158,21 +167,6 @@ final class LocalStressBotController {
         Path java = Path.of(System.getProperty("java.home"), "bin", executable);
         if (!Files.isRegularFile(java)) throw new IOException("Nem található a Java futtatókörnyezet: " + java);
         return java;
-    }
-
-    private static InetAddress resolvePrivateAddress(String requestedHost) throws IOException {
-        String host = requestedHost == null ? "" : requestedHost.trim();
-        if (host.isEmpty()) throw new IOException("A szervercím üres.");
-        if (!host.equalsIgnoreCase("localhost") && !looksLikeIpLiteral(host))
-            throw new IOException("Biztonsági okból csak localhost vagy közvetlen privát IP-cím használható.");
-        InetAddress address = InetAddress.getByName(host);
-        if (!address.isLoopbackAddress() && !address.isSiteLocalAddress() && !address.isLinkLocalAddress())
-            throw new IOException("A cél nem loopback vagy privát LAN-cím; a stresszteszt megtagadva.");
-        return address;
-    }
-
-    private static boolean looksLikeIpLiteral(String host) {
-        return host.matches("[0-9.]+") || host.matches("[0-9A-Fa-f:]+") || host.startsWith("[") && host.endsWith("]");
     }
 
     private synchronized void clear() {
