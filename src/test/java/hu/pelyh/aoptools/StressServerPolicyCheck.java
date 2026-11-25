@@ -31,6 +31,8 @@ public final class StressServerPolicyCheck {
         require(StressBotNames.prepare(2, "AOPTest", List.of("One", "Two", "Three"))
                         .equals(List.of("One", "Two")),
                 "bot count limits selected custom names");
+        require(StressBotNames.prepare(30, "Load", List.of()).size() == 30,
+                "direct-local load-test name capacity");
         rejectNames(List.of("same", "SAME"));
         rejectNames(List.of("contains-dash"));
         System.out.println("Offline endpoint policy checks passed.");

@@ -14,7 +14,7 @@ public final class StressBotNames {
     private StressBotNames() { }
 
     public static List<String> prepare(int count, String prefix, List<String> requestedNames) {
-        if (count < 1 || count > 10) throw new IllegalArgumentException("A botszám csak 1 és 10 között lehet.");
+        if (count < 1 || count > 30) throw new IllegalArgumentException("A botszám csak 1 és 30 között lehet.");
         String safePrefix = prefix == null ? "" : prefix.trim();
         if (!PREFIX.matcher(safePrefix).matches()) {
             throw new IllegalArgumentException("A névelőtag 1-10 angol betűt, számot vagy aláhúzást tartalmazhat.");
@@ -23,8 +23,8 @@ public final class StressBotNames {
         List<String> names = new ArrayList<>();
         Set<String> unique = new HashSet<>();
         if (requestedNames != null) {
-            if (requestedNames.size() > 10) {
-                throw new IllegalArgumentException("Legfeljebb 10 egyedi botnév adható meg.");
+            if (requestedNames.size() > 30) {
+                throw new IllegalArgumentException("Legfeljebb 30 egyedi botnév adható meg.");
             }
             for (String requested : requestedNames) {
                 String name = requested == null ? "" : requested.trim();

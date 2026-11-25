@@ -1,6 +1,7 @@
 package hu.pelyh.aoptools;
 
 import meteordevelopment.meteorclient.settings.IntSetting;
+import meteordevelopment.meteorclient.settings.DoubleSetting;
 import meteordevelopment.meteorclient.settings.Setting;
 import meteordevelopment.meteorclient.settings.SettingGroup;
 import meteordevelopment.meteorclient.settings.StringListSetting;
@@ -42,15 +43,15 @@ public final class LocalStressTestModule extends Module {
 
     private final Setting<Integer> botCount = identities.add(new IntSetting.Builder()
             .name("botok-szama")
-            .description("Egyszerre legfeljebb 10 tesztkliens engedélyezett.")
+            .description("Közvetlen localhost szerveren legfeljebb 30, privát LAN-címen legfeljebb 10 tesztkliens engedélyezett.")
             .defaultValue(3)
-            .range(1, 10)
-            .sliderRange(1, 10)
+            .range(1, 30)
+            .sliderRange(1, 30)
             .build());
 
     private final Setting<List<String>> customNames = identities.add(new StringListSetting.Builder()
             .name("egyedi-botnevek")
-            .description("Opcionális Minecraft-nevek, soronként egy. A lista első Botszám darab eleme használódik; a hiányzó neveket az előtag tölti ki.")
+            .description("Legfeljebb 30 opcionális Minecraft-név, soronként egy. A hiányzó neveket az előtag tölti ki.")
             .defaultValue(new ArrayList<>())
             .build());
 
@@ -60,12 +61,13 @@ public final class LocalStressTestModule extends Module {
             .defaultValue("AOPTest")
             .build());
 
-    private final Setting<Integer> connectionDelaySeconds = timing.add(new IntSetting.Builder()
-            .name("csatlakozasok-kozti-masodperc")
-            .description("Milyen gyakran lépjen be a következő bot. Biztonsági minimum: 1 másodperc.")
-            .defaultValue(1)
-            .range(1, 60)
-            .sliderRange(1, 60)
+    private final Setting<Double> connectionDelaySeconds = timing.add(new DoubleSetting.Builder()
+            .name("botok-belepesi-ideje-masodperc")
+            .description("Két bot belépése közti idő. 1 másodperc alatti érték csak közvetlen localhost szerveren engedélyezett.")
+            .defaultValue(1.0)
+            .range(0.1, 60.0)
+            .sliderRange(0.1, 10.0)
+            .decimalPlaces(1)
             .build());
 
     private final Setting<Integer> durationMinutes = timing.add(new IntSetting.Builder()

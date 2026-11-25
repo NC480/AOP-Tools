@@ -34,14 +34,14 @@ public final class LocalStressBotRunner {
             InetAddress address = StressServerPolicy.parseLocalAddress(args[0]);
             int port = Integer.parseInt(args[1]);
             int count = Integer.parseInt(args[2]);
-            int delaySeconds = Integer.parseInt(args[3]);
+            int delayMilliseconds = Integer.parseInt(args[3]);
             int durationMinutes = Integer.parseInt(args[4]);
             List<String> names = decodeLines(args[5]);
             String authorizedEndpoint = decodeText(args[6]);
             int connectionTimeoutSeconds = Integer.parseInt(args[7]);
             int retryCount = Integer.parseInt(args[8]);
             int retryDelaySeconds = Integer.parseInt(args[9]);
-            validate(address, port, count, delaySeconds, durationMinutes, names, authorizedEndpoint,
+            validate(address, port, count, delayMilliseconds, durationMinutes, names, authorizedEndpoint,
                     connectionTimeoutSeconds, retryCount, retryDelaySeconds);
 
             CountDownLatch stop = new CountDownLatch(1);
@@ -57,7 +57,7 @@ public final class LocalStressBotRunner {
                 ClientSession session = connect(address, port, username, sessionService, stop,
                         connectionTimeoutSeconds, retryCount, retryDelaySeconds);
                 if (session != null) sessions.add(session);
-                if (index + 1 < count) stop.await(delaySeconds, TimeUnit.SECONDS);
+                if (index + 1 < count) stop.await(delayMilliseconds, TimeUnit.MILLISECONDS);
             }
 
             if (sessions.isEmpty()) {
@@ -174,12 +174,15 @@ public final class LocalStressBotRunner {
         return new String(Base64.getUrlDecoder().decode(encoded), StandardCharsets.UTF_8);
     }
 
-    private static void validate(InetAddress address, int port, int count, int delaySeconds,
+    private static void validate(InetAddress address, int port, int count, int delayMilliseconds,
                                  int durationMinutes, List<String> names, String authorizedEndpoint,
                                  int connectionTimeoutSeconds, int retryCount, int retryDelaySeconds) {
         if (port < 1 || port > 65535) fail("Érvénytelen port.");
-        if (count < 1 || count > 10) fail("Legfeljebb 10 bot engedélyezett.");
-        if (delaySeconds < 1 || delaySeconds > 60) fail("A csatlakozási időköz 1-60 másodperc lehet.");
+        if (count < 1 || count > 30) fail("Legfeljebb 30 bot engedélyezett.");
+        if (delayMilliseconds < 100 || delayMilliseconds > 60_000)
+            fail("A csatlakozási időköz 0,1-60 másodperc lehet.");
+        if ((count > 10 || delayMilliseconds < 1000) && !address.isLoopbackAddress())
+            fail("A nagy terhelésű mód csak közvetlen localhost szerveren engedélyezett.");
         if (durationMinutes < 1 || durationMinutes > 10) fail("A futási idő 1-10 perc lehet.");
         if (names.size() != count || !hu.pelyh.aoptools.StressBotNames.prepare(count, "AOPTest", names).equals(names))
             fail("Érvénytelen vagy duplikált botnévlista.");

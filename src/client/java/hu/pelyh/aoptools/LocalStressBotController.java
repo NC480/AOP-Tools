@@ -30,14 +30,14 @@ final class LocalStressBotController {
     }
 
     synchronized Result start(Minecraft client, String requestedHost, int port, int count,
-                              int delaySeconds, int durationMinutes, String prefix,
+                              double delaySeconds, int durationMinutes, String prefix,
                               List<String> requestedNames, int connectionTimeoutSeconds,
                               int retryCount, int retryDelaySeconds) {
         if (isRunning()) return Result.error("A helyi stresszteszt már fut.");
         if (port < 1 || port > 65535) return Result.error("Érvénytelen szerverport.");
-        if (count < 1 || count > 10) return Result.error("A botszám csak 1 és 10 között lehet.");
-        if (delaySeconds < 1 || delaySeconds > 60)
-            return Result.error("A csatlakozások között 1-60 másodperc lehet.");
+        if (count < 1 || count > 30) return Result.error("A botszám csak 1 és 30 között lehet.");
+        if (!Double.isFinite(delaySeconds) || delaySeconds < 0.1 || delaySeconds > 60)
+            return Result.error("A csatlakozások között 0,1-60 másodperc lehet.");
         if (durationMinutes < 1 || durationMinutes > 10)
             return Result.error("A futási idő 1-10 perc lehet.");
         if (connectionTimeoutSeconds < 3 || connectionTimeoutSeconds > 30)
@@ -60,7 +60,11 @@ final class LocalStressBotController {
         } catch (IOException | IllegalArgumentException exception) {
             return Result.error(exception.getMessage());
         }
+        if ((count > 10 || delaySeconds < 1.0) && !address.isLoopbackAddress()) {
+            return Result.error("10-nél több bot vagy 1 másodpercnél gyorsabb belépés csak közvetlen localhost szerveren engedélyezett.");
+        }
         String endpoint = StressServerPolicy.endpoint(address, port);
+        int delayMilliseconds = (int) Math.round(delaySeconds * 1000.0);
 
         try {
             Path directory = client.gameDirectory.toPath().resolve("config").resolve("aop-tools");
@@ -79,7 +83,7 @@ final class LocalStressBotController {
             command.add(address.getHostAddress());
             command.add(Integer.toString(port));
             command.add(Integer.toString(count));
-            command.add(Integer.toString(delaySeconds));
+            command.add(Integer.toString(delayMilliseconds));
             command.add(Integer.toString(durationMinutes));
             command.add(Base64.getUrlEncoder().withoutPadding().encodeToString(
                     String.join("\n", botNames).getBytes(StandardCharsets.UTF_8)));

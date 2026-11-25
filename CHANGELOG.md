@@ -2,6 +2,12 @@
 
 A fontosabb változások ebben a fájlban követhetők.
 
+## 1.15.0 – 2026-11-25
+
+- Közvetlen loopback Paper szerveren legfeljebb 30 tesztbot indítható.
+- A botok belépési időköze 0,1–60,0 másodperc között, tizedmásodperces pontossággal állítható.
+- A nagy terhelésű mód (>10 bot vagy <1 másodperces időköz) csak `localhost`/loopback címen engedélyezett; privát LAN-on megmarad a 10 bot/1 másodperc korlát.
+
 ## 1.14.3 – 2026-11-23
 
 - A botmodul Meteor-panelje külön, közvetlen `BOTOK INDÍTÁSA` és `BOTOK LEÁLLÍTÁSA` gombokat kapott.
